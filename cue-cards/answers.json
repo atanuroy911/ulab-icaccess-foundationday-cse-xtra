@@ -1,0 +1,89 @@
+{
+  "game": "AI or Human? Cue Card Game",
+  "event": "23rd Foundation Day — University of Liberal Arts Bangladesh (ULAB)",
+  "source": "sightengine.com/which-image-is-ai",
+  "pairs": [
+    {
+      "pair": 1,
+      "topic": "Cyclist",
+      "left": { "type": "AI", "file": "pair1_left.webp" },
+      "right": { "type": "Human (Real)", "file": "pair1_right.webp" },
+      "answer": "LEFT is AI"
+    },
+    {
+      "pair": 2,
+      "topic": "Dining",
+      "left": { "type": "Human (Real)", "file": "pair2_left.webp" },
+      "right": { "type": "AI", "file": "pair2_right.webp" },
+      "answer": "RIGHT is AI"
+    },
+    {
+      "pair": 3,
+      "topic": "Couple in European City",
+      "left": { "type": "AI", "file": "pair3_left.webp" },
+      "right": { "type": "Human (Real)", "file": "pair3_right.webp" },
+      "answer": "LEFT is AI"
+    },
+    {
+      "pair": 4,
+      "topic": "Auto Mechanic",
+      "left": { "type": "AI", "file": "pair4_left.webp" },
+      "right": { "type": "Human (Real)", "file": "pair4_right.webp" },
+      "answer": "LEFT is AI"
+    },
+    {
+      "pair": 5,
+      "topic": "Office Workspace",
+      "left": { "type": "AI", "file": "pair5_left.webp" },
+      "right": { "type": "Human (Real)", "file": "pair5_right.webp" },
+      "answer": "LEFT is AI"
+    },
+    {
+      "pair": 6,
+      "topic": "Chef in Kitchen",
+      "left": { "type": "Human (Real)", "file": "pair6_left.webp" },
+      "right": { "type": "AI", "file": "pair6_right.webp" },
+      "answer": "RIGHT is AI"
+    },
+    {
+      "pair": 7,
+      "topic": "Heart in Beach Sand",
+      "left": { "type": "Human (Real)", "file": "pair7_left.webp" },
+      "right": { "type": "AI", "file": "pair7_right.webp" },
+      "answer": "RIGHT is AI"
+    },
+    {
+      "pair": 8,
+      "topic": "London Red Bus",
+      "left": { "type": "Human (Real)", "file": "pair8_left.webp" },
+      "right": { "type": "AI", "file": "pair8_right.webp" },
+      "answer": "RIGHT is AI"
+    },
+    {
+      "pair": 9,
+      "topic": "Business Handshake",
+      "left": { "type": "AI", "file": "pair9_left.webp" },
+      "right": { "type": "Human (Real)", "file": "pair9_right.webp" },
+      "answer": "LEFT is AI"
+    },
+    {
+      "pair": 10,
+      "topic": "Disco Ball",
+      "left": { "type": "Human (Real)", "file": "pair10_left.webp" },
+      "right": { "type": "AI", "file": "pair10_right.webp" },
+      "answer": "RIGHT is AI"
+    }
+  ],
+  "text_pairs": [
+    {"pair": 1, "topic": "Restaurant Review",  "A": "#T1A = Human (informal tone, emoji, personal opinion)", "B": "#T1B = AI (formal, generic, no personality)"},
+    {"pair": 2, "topic": "Birthday Wish",      "A": "#T2A = AI (generic warm wishes, no personal detail)",  "B": "#T2B = Human (specific memory, playful insult)"},
+    {"pair": 3, "topic": "Complaint Letter",   "A": "#T3A = AI (formal, 'I am writing to formally...')",    "B": "#T3B = Human (caps, raw frustration, specifics)"},
+    {"pair": 4, "topic": "Motivational",       "A": "#T4A = Human (punchy, concrete, 'That's the whole game')", "B": "#T4B = AI (vague clichés, 'opportunity for growth')"},
+    {"pair": 5, "topic": "Describing Nature",  "A": "#T5A = AI (generic, 'diverse ecosystems', no detail)",  "B": "#T5B = Human (specific sensory detail, personal memory)"},
+    {"pair": 6, "topic": "Cooking Tip",        "A": "#T6A = AI ('apply heat at recommended temperature')",   "B": "#T6B = Human (passionate, 'My nanu taught me this')"},
+    {"pair": 7, "topic": "Describing a Friend","A": "#T7A = Human (specific scenario, '3am flat tyre')",     "B": "#T7B = AI (vague adjectives, 'kind and reliable')"},
+    {"pair": 8, "topic": "Travel Experience",  "A": "#T8A = AI ('renowned tourist destination')",             "B": "#T8B = Human ('chips on the beach', ellipsis pause)"},
+    {"pair": 9, "topic": "University Life",    "A": "#T9A = AI ('presents students with numerous opportunities')", "B": "#T9B = Human ('Cried twice. By week three...')"},
+    {"pair": 10,"topic": "About AI",           "A": "#T10A = Human ('grudge against Tuesdays')",              "B": "#T10B = AI ('transforming human society', hollow closing)"}
+  ]
+}
