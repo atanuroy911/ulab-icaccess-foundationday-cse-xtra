@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CSE | University of Liberal Arts Bangladesh (Prototype)</title>
+<style>
+  :root{
+    --ulab-blue:#0b5fa8; --ulab-navy:#14214d; --ulab-yellow:#f5b800; --apply:#0a6ab8;
+    --foot-bg:#f8f9fb; --foot-bar:#3ba1dc; --foot-head:#14508f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:"Montserrat","Segoe UI",Arial,sans-serif;color:#333;background:#fff}
+  a{text-decoration:none;color:inherit}
+  ul{list-style:none;margin:0;padding:0}
+
+  /* ---------- Header (single, ULAB style) ---------- */
+  .top{background:#fff;border-bottom:1px solid #999;position:sticky;top:0;z-index:40}
+  .top-in{max-width:1240px;margin:0 auto;height:100px;display:flex;align-items:center;padding:0 20px;position:relative}
+  .logo{display:flex;align-items:center;gap:8px;margin-right:28px;flex:none}
+  .logo .word{font-size:50px;line-height:44px;color:var(--ulab-blue);font-weight:300;letter-spacing:-1px}
+  .logo small{display:block;font-size:6.5px;color:var(--ulab-blue);letter-spacing:.2px;border-top:1px solid var(--ulab-yellow);padding-top:3px;margin-top:2px}
+  .mainnav{display:flex;gap:18px;font-size:14px;color:var(--ulab-navy);margin-top:6px}
+  .mainnav a{padding:6px 0}
+  .mainnav a.active,.mainnav a:hover{color:var(--ulab-yellow)}
+  .top-right{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:8px}
+  .soc{display:flex;gap:18px;color:#111}
+  .soc svg{width:15px;height:15px;fill:currentColor}
+  .apply-row{display:flex;align-items:center;gap:14px}
+  .apply{background:var(--apply);color:#fff;font-weight:600;font-size:14px;padding:11px 22px;letter-spacing:.2px;white-space:nowrap}
+  .search{display:flex;align-items:center;gap:5px;color:var(--ulab-navy);font-size:16px}
+  .burger{display:none;background:none;border:0;font-size:28px;color:var(--ulab-navy);cursor:pointer}
+
+  /* ---------- Carousel ---------- */
+  .carousel{position:relative;height:440px;overflow:hidden;background:var(--ulab-navy)}
+  .slide{position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity .8s,visibility .8s;display:flex;align-items:center;color:#fff}
+  .slide.on{opacity:1;visibility:visible;z-index:1}
+  .s1{background:linear-gradient(110deg,#0b2a5b 0%,#0b5fa8 100%)}
+  .s2{background:linear-gradient(110deg,#0b3d5c 0%,#1594b5 100%)}
+  .s3{background:linear-gradient(110deg,#2a1d63 0%,#5b3fb0 100%)}
+  .s4{background:linear-gradient(110deg,#0f4a3b 0%,#2a9d78 100%)}
+  .slide::after{content:"";position:absolute;right:-80px;top:-60px;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle,rgba(245,184,0,.35),rgba(245,184,0,0) 65%)}
+  .slide-in{position:relative;z-index:2;max-width:1240px;width:100%;margin:0 auto;padding:0 80px;display:flex;align-items:center;justify-content:space-between;gap:40px}
+  .copy{max-width:640px}
+  .eyebrow{display:inline-block;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--ulab-yellow);font-weight:700;margin-bottom:14px}
+  .copy h2{margin:0 0 16px;font-size:42px;line-height:1.15;font-weight:600}
+  .copy p{margin:0 0 26px;font-size:17px;line-height:1.6;color:#dbe8f7}
+  .btn{display:inline-block;background:var(--ulab-yellow);color:#14214d;font-weight:700;font-size:14px;padding:12px 26px}
+  .btn:hover{background:#ffd23d}
+  .btn.ghost{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.7);margin-left:10px}
+  .btn.ghost:hover{background:rgba(255,255,255,.12)}
+  .badge{flex:none;width:230px;height:230px;border:2px solid rgba(255,255,255,.35);border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:rgba(255,255,255,.07)}
+  .badge b{font-size:54px;line-height:1;color:var(--ulab-yellow)}
+  .badge span{font-size:14px;margin-top:8px;letter-spacing:1px;text-transform:uppercase}
+  .dots{position:absolute;bottom:16px;left:0;right:0;display:flex;justify-content:center;gap:10px;z-index:3}
+  .dots button{width:30px;height:4px;border:0;background:rgba(255,255,255,.4);padding:0;cursor:pointer}
+  .dots button.on{background:var(--ulab-yellow)}
+  .arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:3;background:rgba(255,255,255,.12);color:#fff;border:0;width:44px;height:44px;border-radius:50%;font-size:18px;cursor:pointer}
+  .arrow:hover{background:rgba(255,255,255,.28)}
+  .prev{left:20px}.next{right:20px}
+
+  /* ---------- Main body ---------- */
+  .wrap{max-width:1240px;margin:0 auto;padding:0 20px}
+  .intro{display:grid;grid-template-columns:1.2fr 1fr;gap:60px;padding:64px 0 48px;align-items:center}
+  .kicker{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--ulab-yellow);font-weight:700}
+  .intro h2{margin:8px 0 16px;font-size:32px;color:var(--ulab-navy);font-weight:600}
+  .intro p{margin:0;line-height:1.75;font-size:15px;color:#555}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .stat{background:#f3f7fc;border-left:4px solid var(--ulab-blue);padding:18px 20px}
+  .stat b{display:block;font-size:30px;color:var(--ulab-blue)}
+  .stat span{font-size:13px;color:#555}
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:56px}
+  .tile{border:1px solid #e1e8f2;padding:22px;transition:.2s;background:#fff}
+  .tile:hover{border-color:var(--ulab-blue);box-shadow:0 6px 18px rgba(11,95,168,.12);transform:translateY(-2px)}
+  .tile h4{margin:0 0 6px;color:var(--ulab-navy);font-size:16px}
+  .tile p{margin:0;font-size:13px;color:#666;line-height:1.5}
+  .tile i{display:block;width:34px;height:4px;background:var(--ulab-yellow);margin-bottom:14px}
+  .feeds{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-bottom:70px}
+  .feed{border:1px solid #e1e8f2;background:#fff;display:flex;flex-direction:column}
+  .feed h3{margin:0;padding:16px 22px;background:var(--ulab-blue);color:#fff;font-size:16px;display:flex;justify-content:space-between;align-items:center}
+  .feed h3 a{font-size:12px;font-weight:500;color:var(--ulab-yellow)}
+  .feed ul{padding:6px 22px 14px;max-height:430px;overflow-y:auto}
+  .feed li{padding:14px 0;border-bottom:1px solid #eef2f7;font-size:14px;line-height:1.55;color:#444}
+  .feed li:last-child{border:0}
+  .feed li time{display:block;font-size:11px;font-weight:700;color:var(--ulab-blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px}
+  .feed li a{color:var(--ulab-navy);font-weight:600}
+  .feed li a:hover{color:var(--ulab-blue);text-decoration:underline}
+  .feed li small{color:#777}
+
+  /* ---------- Footer (ULAB) ---------- */
+  footer{background:var(--foot-bg);font-size:14px;color:#111}
+  .foot-in{max-width:1240px;margin:0 auto;padding:46px 20px 40px;display:grid;grid-template-columns:320px 1fr 1fr 1fr;gap:20px}
+  .foot-in h4{margin:0 0 14px;font-size:18px;color:var(--foot-head);font-weight:700}
+  .flogo{margin:6px 0 24px}
+  .addr p{line-height:21px;margin:0}
+  .addr table{border-collapse:collapse;margin-top:14px}
+  .addr td{padding:0 40px 0 0;line-height:20px}
+  .fsoc{display:flex;gap:8px;margin-top:22px}
+  .fsoc a{width:30px;height:30px;background:#f5b800;display:flex;align-items:center;justify-content:center}
+  .fsoc svg{width:15px;height:15px;fill:#fff}
+  .lk li{margin-bottom:7px;display:flex;align-items:center;gap:8px;font-size:14px}
+  .lk li::before{content:">";flex:none;width:21px;height:21px;background:#3b9be0;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .lk li a:hover{color:var(--ulab-blue)}
+  .sec{margin-bottom:26px}
+  .map{width:214px;height:105px;background:#e8ebee;position:relative;overflow:hidden;border:1px solid #dde}
+  .map i{position:absolute;background:#f6c25a;width:200px;height:6px;transform:rotate(48deg);left:40px;top:40px}
+  .map b{position:absolute;left:78px;top:50px;width:26px;height:26px;border-radius:50%;background:#bfe3bf}
+  .map u{position:absolute;right:8px;bottom:24px;width:90px;height:14px;background:#8db6ee;transform:rotate(-30deg)}
+  .bar{background:var(--foot-bar);color:#fff;text-align:center;font-size:12px;padding:12px 0}
+  .contact-fab{position:fixed;left:20px;bottom:16px;background:#1cb5ad;color:#fff;font-weight:700;padding:16px 20px;border-radius:12px;display:flex;gap:10px;align-items:center;z-index:50;box-shadow:0 2px 8px rgba(0,0,0,.2);font-size:16px}
+  .totop{position:fixed;right:20px;bottom:20px;width:50px;height:50px;border-radius:50%;background:#2b2f36;color:#fff;border:0;font-size:22px;cursor:pointer;z-index:50}
+
+  /* ---------- Responsive ---------- */
+  @media(max-width:1100px){
+    .mainnav{display:none}
+    .mainnav.open{display:flex;position:absolute;top:100px;left:0;right:0;background:#fff;flex-direction:column;padding:10px 20px;gap:0;z-index:20;border-bottom:1px solid #ccc}
+    .burger{display:block;margin-left:10px}
+    .intro{grid-template-columns:1fr;gap:30px}
+    .tiles{grid-template-columns:1fr 1fr}
+    .feeds{grid-template-columns:1fr}
+    .foot-in{grid-template-columns:1fr 1fr}
+    .badge{display:none}
+    .slide-in{padding:0 70px}
+  }
+  @media(max-width:620px){
+    .top-in{height:84px}.logo .word{font-size:40px}
+    .soc{display:none}.apply{padding:9px 12px;font-size:12px}.search span{display:none}
+    .carousel{height:420px}.copy h2{font-size:26px}.copy p{font-size:14px}.slide-in{padding:0 28px}.arrow{display:none}
+    .btn.ghost{margin:10px 0 0}
+    .tiles{grid-template-columns:1fr}
+    .foot-in{grid-template-columns:1fr}
+    .contact-fab span{display:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ HEADER (one only) ============ -->
+<header class="top">
+  <div class="top-in">
+    <a class="logo" href="#">
+      <svg width="48" height="62" viewBox="0 0 48 62" aria-hidden="true">
+        <path d="M2 2h44v34c0 14-10 22-22 26C12 58 2 50 2 36z" fill="#f5b800"/>
+        <path d="M7 7h34v29c0 10-7 16-17 20C14 52 7 46 7 36z" fill="#0b5fa8"/>
+        <path d="M24 13c6 6 8 12 6 20l-6 9-6-9c-2-8 0-14 6-20z" fill="#fff"/>
+        <circle cx="24" cy="29" r="2" fill="#0b5fa8"/>
+      </svg>
+      <div><span class="word">ULAB</span><small>DEPARTMENT OF COMPUTER SCIENCE &amp; ENGINEERING</small></div>
+    </a>
+    <nav class="mainnav" id="mainnav">
+      <a href="#" class="active">HOME</a><a href="#">ABOUT</a><a href="#">PEOPLE</a><a href="#">RESEARCH</a><a href="#">TEACHING</a><a href="#">PROGRAMS</a><a href="#">ADMISSIONS</a><a href="#">SEMINARS</a><a href="#">ALUMNI</a>
+    </nav>
+    <div class="top-right">
+      <div class="soc">
+        <svg viewBox="0 0 24 24"><path d="M14 8V6c0-1 .3-1.5 1.6-1.5H17V1h-2.8C11 1 10 3 10 5.500V8H7.500v3.500H10V23h4V11.500h2.800L17.300 8z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M23 4.600a9 9 0 0 1-2.600.7 4.500 4.500 0 0 0 2-2.500 9 9 0 0 1-2.900 1.100 4.500 4.500 0 0 0-7.700 4.100A12.800 12.800 0 0 1 2.500 3.300a4.500 4.500 0 0 0 1.400 6 4.500 4.500 0 0 1-2-.6c0 2.200 1.500 4 3.600 4.500a4.500 4.500 0 0 1-2 .1 4.500 4.500 0 0 0 4.200 3.100A9 9 0 0 1 1 18.300 12.800 12.800 0 0 0 7.900 20.300c8.300 0 12.900-6.900 12.900-12.900v-.6A9 9 0 0 0 23 4.600z"/></svg>
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="currentColor" stroke-width="2.200"/><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="2.200"/></svg>
+        <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="4"/><path d="M10 9v6l5-3z" fill="#fff"/></svg>
+      </div>
+      <div class="apply-row">
+        <a class="apply" href="#">APPLY NOW</a>
+        <a class="search" href="#"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.500"><circle cx="10" cy="10" r="7"/><path d="M15.500 15.500 22 22"/></svg><span>SEARCH</span></a>
+        <button class="burger" aria-label="Menu" onclick="document.getElementById('mainnav').classList.toggle('open')">&#9776;</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ HERO CAROUSEL ============ -->
+<section class="carousel" id="carousel" aria-roledescription="carousel">
+  <button class="arrow prev" aria-label="Previous">&#10094;</button>
+  <button class="arrow next" aria-label="Next">&#10095;</button>
+
+  <div class="slide s1 on"><div class="slide-in">
+    <div class="copy"><span class="eyebrow">Department of CSE</span><h2>Building the engineers who will shape Bangladesh's digital future</h2><p>A liberal arts approach to computer science: strong foundations, creative problem solving and real industry exposure.</p><a class="btn" href="#">Explore Programs</a><a class="btn ghost" href="#">About the Department</a></div>
+    <div class="badge"><b>ULAB</b><span>CSE Department</span></div>
+  </div></div>
+
+  <div class="slide s2"><div class="slide-in">
+    <div class="copy"><span class="eyebrow">Admissions Open</span><h2>Start your B.Sc. in Computer Science &amp; Engineering — Spring 2027</h2><p>Merit and need-based scholarships are available for outstanding applicants.</p><a class="btn" href="#">Apply Now</a><a class="btn ghost" href="#">Scholarships</a></div>
+    <div class="badge"><b>Spring</b><span>2027 Intake</span></div>
+  </div></div>
+
+  <div class="slide s3"><div class="slide-in">
+    <div class="copy"><span class="eyebrow">Distinguished Lecture Series</span><h2>Trustworthy AI for Emerging Economies</h2><p>Open talk by an invited guest speaker &middot; Thursday, 22 October 2026, 3:00 PM &middot; ULAB Auditorium.</p><a class="btn" href="#">Register to Attend</a></div>
+    <div class="badge"><b>22</b><span>October 2026</span></div>
+  </div></div>
+
+  <div class="slide s4"><div class="slide-in">
+    <div class="copy"><span class="eyebrow">Student Life</span><h2>ULAB Programming Contest 2026</h2><p>Teams of three. Real-world problems. Prizes, internships and bragging rights.</p><a class="btn" href="#">Join the Contest</a></div>
+    <div class="badge"><b>14</b><span>November 2026</span></div>
+  </div></div>
+
+  <div class="dots" id="dots"></div>
+</section>
+
+<!-- ============ MAIN BODY ============ -->
+<main class="wrap">
+  <section class="intro">
+    <div>
+      <span class="kicker">Welcome</span>
+      <h2>Computer Science &amp; Engineering at ULAB</h2>
+      <p>The Department of Computer Science and Engineering prepares graduates for a fast-changing digital world. Grounded in the liberal arts tradition, we combine rigorous technical training with critical thinking, communication and ethics. Our students and faculty are active in artificial intelligence, networks, cybersecurity, software engineering and embedded systems, in close collaboration with industry.</p>
+    </div>
+    <div class="stats">
+      <div class="stat"><b>1,200+</b><span>Students</span></div>
+      <div class="stat"><b>40+</b><span>Faculty members</span></div>
+      <div class="stat"><b>8</b><span>Research labs</span></div>
+      <div class="stat"><b>5,000+</b><span>Alumni worldwide</span></div>
+    </div>
+  </section>
+
+  <section class="tiles">
+    <a class="tile" href="#"><i></i><h4>Undergraduate</h4><p>B.Sc. in CSE with specialization tracks.</p></a>
+    <a class="tile" href="#"><i></i><h4>Graduate</h4><p>M.Sc. and research degree opportunities.</p></a>
+    <a class="tile" href="#"><i></i><h4>Research</h4><p>Labs, projects, grants and collaborations.</p></a>
+    <a class="tile" href="#"><i></i><h4>Careers</h4><p>Internships, industry partners and placements.</p></a>
+  </section>
+
+  <section class="feeds">
+    <div class="feed">
+      <h3>Latest News <a href="#">View all &rarr;</a></h3>
+      <ul>
+        <li><time>Oct 2026</time>CSE students <a href="#">Student A</a> and <a href="#">Student B</a> won the National Hackathon in the AI for Good category.</li>
+        <li><time>Oct 2026</time><a href="#">Dr. Faculty Two</a> receives the Excellence in Teaching Award 2026.</li>
+        <li><time>Sep 2026</time>Capstone team awarded Best Project for a low-cost IoT platform for smart agriculture.</li>
+        <li><time>Sep 2026</time><a href="#">Dr. Faculty Three</a> appointed Head of the AI Research Lab.</li>
+      </ul>
+    </div>
+    <div class="feed">
+      <h3>Events &amp; Seminars <a href="#">View all &rarr;</a></h3>
+      <ul>
+        <li><time>22 Oct &middot; 3:00 PM</time><a href="#">Distinguished Lecture:</a> Trustworthy AI for Emerging Economies. <small>Auditorium</small></li>
+        <li><time>28 Oct &middot; 11:00 AM</time><a href="#">Industry Talk:</a> Careers in Software Engineering. <small>Room 501</small></li>
+        <li><time>3 Nov &middot; 2:00 PM</time><a href="#">Workshop:</a> Cloud-Native Development. <small>Lab 3</small></li>
+        <li><time>14 Nov &middot; 9:00 AM</time><a href="#">ULAB Programming Contest 2026.</a> <small>CSE Labs</small></li>
+      </ul>
+    </div>
+    <div class="feed">
+      <h3>Recent Publications <a href="#">View all &rarr;</a></h3>
+      <ul>
+        <li><time>ACL 2026</time><a href="#">Lightweight transformer models for low-resource Bangla text classification.</a> <small>Author One, Author Two</small></li>
+        <li><time>IEEE TMI 2026</time><a href="#">Federated learning for privacy-preserving medical imaging.</a> <small>Author Three et al.</small></li>
+        <li><time>IEEE IoT-J 2026</time><a href="#">Energy-aware routing in LoRa sensor networks for flood monitoring.</a> <small>Author Six, Author Seven</small></li>
+        <li><time>ACM CCS 2026</time><a href="#">Static analysis for vulnerabilities in mobile banking apps.</a> <small>Author Eight, Author Nine</small></li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<!-- ============ FOOTER (ULAB) ============ -->
+<footer>
+  <div class="foot-in">
+    <div>
+      <div class="flogo">
+        <svg width="200" height="76" viewBox="0 0 200 76"><g transform="translate(2,4) scale(.95)"><path d="M2 2h44v34c0 14-10 22-22 26C12 58 2 50 2 36z" fill="#f5b800"/><path d="M7 7h34v29c0 10-7 16-17 20C14 52 7 46 7 36z" fill="#0b5fa8"/><path d="M24 13c6 6 8 12 6 20l-6 9-6-9c-2-8 0-14 6-20z" fill="#fff"/></g><text x="58" y="52" font-size="58" fill="#0b5fa8" font-family="Segoe UI,Arial" font-weight="300">ULAB</text><text x="60" y="70" font-size="9" fill="#0b5fa8" font-family="Segoe UI,Arial">UNIVERSITY OF THE FUTURE</text></svg>
+      </div>
+      <p style="width:290px;line-height:16px;font-size:13.5px;margin:0">The University of Liberal Arts Bangladesh and its curricula are accredited by the University Grants Commission (UGC) of Bangladesh, and approved by the Ministry of Education, Government of People's Republic of Bangladesh.</p>
+      <div class="addr" style="margin-top:22px">
+        <h4>Contact</h4>
+        <p>688 Beribadh Road</p><p>Mohammadpur</p><p>Dhaka - 1207, Bangladesh</p>
+        <table><tr><td>Phone:</td><td>+88-02-223328001</td></tr><tr><td>Fax:</td><td>+88-02-223328006</td></tr></table>
+        <div class="fsoc">
+          <a href="#" aria-label="Facebook"><svg viewBox="0 0 24 24"><path d="M14 8V6c0-1 .3-1.500 1.600-1.500H17V1h-2.800C11 1 10 3 10 5.500V8H7.500v3.500H10V23h4V11.500h2.800L17.300 8z"/></svg></a>
+          <a href="#" aria-label="Twitter"><svg viewBox="0 0 24 24"><path d="M23 4.600a9 9 0 0 1-2.600.7 4.500 4.500 0 0 0 2-2.500 9 9 0 0 1-2.900 1.100 4.500 4.500 0 0 0-7.700 4.100A12.800 12.800 0 0 1 2.500 3.300a4.500 4.500 0 0 0 1.400 6 4.500 4.500 0 0 1-2-.6c0 2.200 1.500 4 3.600 4.500a4.500 4.500 0 0 1-2 .1 4.500 4.500 0 0 0 4.200 3.100A9 9 0 0 1 1 18.300 12.800 12.800 0 0 0 7.900 20.300c8.300 0 12.900-6.900 12.900-12.900v-.6A9 9 0 0 0 23 4.600z"/></svg></a>
+          <a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="5" fill="none" stroke="#fff" stroke-width="2.200"/><circle cx="12" cy="12" r="4" fill="none" stroke="#fff" stroke-width="2.200"/></svg></a>
+          <a href="#" aria-label="YouTube"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="4"/><path d="M10 9v6l5-3z" fill="#f5b800"/></svg></a>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec"><h4>Departments</h4><ul class="lk"><li><a href="#">Programs</a></li></ul></div>
+      <div class="sec"><h4>Research</h4><ul class="lk"><li><a href="#">Research</a></li><li><a href="#">Publications</a></li><li><a href="#">Research Centers</a></li></ul></div>
+      <div class="sec"><h4>Location Map</h4><div class="map"><i></i><b></b><u></u></div></div>
+    </div>
+
+    <div>
+      <h4>Admissions</h4>
+      <ul class="lk"><li><a href="#">Undergraduate Programs</a></li><li><a href="#">Graduate Programs</a></li><li><a href="#">International</a></li><li><a href="#">Scholarships</a></li><li><a href="#">Prospectus</a></li><li><a href="#">Payment Guideline</a></li></ul>
+    </div>
+
+    <div>
+      <h4>Quick Links</h4>
+      <ul class="lk"><li><a href="#">Giving</a></li><li><a href="#">Alumni</a></li><li><a href="#">Jobs at ULAB</a></li><li><a href="#">URMS</a></li><li><a href="#">Library</a></li><li><a href="#">Academic Calendar</a></li><li><a href="#">ULAB Press</a></li><li><a href="#">Contact Us</a></li><li><a href="#">IQAC</a></li><li><a href="#">Webmail Login</a></li><li><a href="#">Moodle</a></li><li><a href="#">Tender</a></li><li><a href="#">Annual Reports</a></li><li><a href="#">Shuttle Service Schedule</a></li><li><a href="#">File Cabinet</a></li></ul>
+    </div>
+  </div>
+  <div class="bar">&copy; 2006-2026 UNIVERSITY OF LIBERAL ARTS BANGLADESH. All Rights Reserved.</div>
+</footer>
+
+<a class="contact-fab" href="#"><svg width="30" height="22" viewBox="0 0 30 22" fill="none" stroke="#fff" stroke-width="2"><rect x="1" y="1" width="28" height="20" rx="3"/><path d="M1 4l14 9 14-9"/></svg><span>Contact us</span></a>
+<button class="totop" aria-label="Back to top" onclick="window.scrollTo({top:0,behavior:'smooth'})">&#8963;</button>
+
+<script>
+(function(){
+  var slides=[].slice.call(document.querySelectorAll('.slide')),
+      dotsBox=document.getElementById('dots'), i=0, timer;
+  slides.forEach(function(_,n){
+    var b=document.createElement('button');
+    b.setAttribute('aria-label','Slide '+(n+1));
+    b.onclick=function(){go(n);restart();};
+    dotsBox.appendChild(b);
+  });
+  var dots=[].slice.call(dotsBox.children);
+  function go(n){
+    i=(n+slides.length)%slides.length;
+    slides.forEach(function(s,k){s.classList.toggle('on',k===i);dots[k].classList.toggle('on',k===i);});
+  }
+  function restart(){clearInterval(timer);timer=setInterval(function(){go(i+1);},5000);}
+  document.querySelector('.prev').onclick=function(){go(i-1);restart();};
+  document.querySelector('.next').onclick=function(){go(i+1);restart();};
+  var c=document.getElementById('carousel');
+  c.addEventListener('mouseenter',function(){clearInterval(timer);});
+  c.addEventListener('mouseleave',restart);
+  go(0);restart();
+})();
+</script>
+</body>
+</html>
