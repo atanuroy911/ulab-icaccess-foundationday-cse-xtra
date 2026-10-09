@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Certificate Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Allura&family=Cinzel:wght@500;700;900&family=Dancing+Script:wght@600&family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=Great+Vibes&family=Inter:wght@400;500;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Lora:ital,wght@0,400;0,600;1,400&family=Merriweather:ital,wght@0,400;0,700;1,400&family=Montserrat:wght@400;500;600;700;800&family=Oswald:wght@500;700&family=Pinyon+Script&family=Playfair+Display:ital,wght@0,500;0,700;0,800;1,500&family=Poppins:wght@400;500;600;700&family=Roboto:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font:13px/1.45 "Plus Jakarta Sans",Inter,"Segoe UI",Arial,sans-serif;color:#0f172a;background:#e9edf3;display:flex;flex-direction:column}
+  /* ---------- top bar ---------- */
+  .topbar{display:flex;align-items:center;gap:10px;padding:10px 16px;background:#1e3a5f;color:#fff;flex:none;flex-wrap:wrap}
+  .topbar h1{font-size:16px;margin:0 14px 0 0;font-weight:700;display:flex;align-items:center;gap:8px}
+  .topbar h1 i{width:26px;height:26px;border-radius:7px;background:linear-gradient(135deg,#f5b800,#e08a00);display:grid;place-items:center;font-style:normal;color:#0f172a}
+  .types{display:flex;gap:6px;flex-wrap:wrap}
+  .types button{background:#1e293b;color:#cbd5e1;border:1px solid #334155;border-radius:999px;padding:6px 12px;font:600 12px "Plus Jakarta Sans",sans-serif;cursor:pointer}
+  .types button.on{background:#f5b800;color:#0f172a;border-color:#f5b800}
+  .tb-right{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+  .btn{border:1px solid #cbd5e1;background:#fff;color:#0f172a;border-radius:8px;padding:7px 12px;font:600 12px "Plus Jakarta Sans",sans-serif;cursor:pointer;white-space:nowrap}
+  .btn:hover{border-color:#64748b}
+  .btn.p{background:#2563eb;border-color:#2563eb;color:#fff}
+  .btn.p:hover{background:#1d4ed8}
+  .btn.y{background:#f5b800;border-color:#f5b800}
+  .btn.sm{padding:4px 8px;font-size:11px}
+  .btn.d{color:#b91c1c}
+  .topbar .btn{background:rgba(255,255,255,.08);color:#fff;border-color:rgba(255,255,255,.2)}
+  .topbar .btn:disabled{opacity:.4;cursor:not-allowed}
+  .btn{transition:background .15s,border-color .15s,transform .1s}.btn:active{transform:scale(.97)}
+  .btn svg,.ico{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;vertical-align:-3px}
+  button:focus-visible,summary:focus-visible{outline:2px solid #60a5fa;outline-offset:2px}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(20px);background:#0f172a;color:#fff;padding:10px 16px;border-radius:10px;font-weight:600;opacity:0;transition:.25s;z-index:1000;pointer-events:none;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  .toast.on{opacity:1;transform:translateX(-50%)}
+  .cert .sel{outline:2px solid #2563eb!important;outline-offset:3px}
+  @media(max-width:900px){.main{flex-direction:column}.side{width:100%;max-height:48vh;border-right:0;border-bottom:1px solid #d7dee8}.view{min-height:52vh;padding:12px}.tip{display:none}.tb-right{margin-left:0}}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  .topbar .btn.p{background:#2563eb;border-color:#2563eb}
+  .topbar .btn.y{background:#f5b800;color:#0f172a;border-color:#f5b800}
+
+  .main{flex:1;display:flex;min-height:0}
+  /* ---------- sidebar ---------- */
+  .side{width:390px;flex:none;background:#fff;border-right:1px solid #d7dee8;overflow-y:auto}
+  details{border-bottom:1px solid #e5eaf1}
+  summary{list-style:none;cursor:pointer;padding:12px 16px;font-weight:700;font-size:13px;display:flex;align-items:center;gap:8px;user-select:none}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:"▸";margin-left:auto;color:#94a3b8;transition:.2s}
+  details[open] summary::after{transform:rotate(90deg)}
+  summary span{width:24px;height:24px;border-radius:7px;background:#e8eef7;color:#1e3a5f;display:grid;place-items:center}
+  .pad{padding:2px 16px 16px}
+  label.f{display:block;margin-top:10px}
+  label.f>b{display:block;font-size:11px;font-weight:600;color:#475569;margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+  input[type=text],input[type=number],textarea,select{width:100%;border:1px solid #cfd8e3;border-radius:7px;padding:7px 9px;font:13px "Plus Jakarta Sans",sans-serif;color:#0f172a;background:#fff}
+  textarea{resize:vertical;min-height:60px}
+  input:focus,textarea:focus,select:focus{outline:2px solid #93c5fd;border-color:#3b82f6}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .chk{display:flex;align-items:center;gap:7px;margin-top:10px;font-size:12.5px;cursor:pointer}
+  .rng{display:flex;align-items:center;gap:8px}
+  .rng input{flex:1}
+  .rng output{width:38px;text-align:right;font-size:11px;color:#64748b}
+  .hint{font-size:11.5px;color:#64748b;margin-top:6px}
+  .hint code{background:#f1f5f9;padding:1px 4px;border-radius:4px;color:#334155}
+  .item{border:1px solid #e2e8f0;border-radius:10px;padding:10px;margin-top:10px;background:#f8fafc}
+  .item-h{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+  .item-h img{width:40px;height:40px;object-fit:contain;background:#fff;border:1px solid #e2e8f0;border-radius:6px}
+  .item-h b{flex:1;font-size:12px}
+  .grid-tpl{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+  .tpl{border:2px solid #e2e8f0;border-radius:8px;padding:4px;cursor:pointer;background:#fff;text-align:center;font-size:11px;font-weight:600}
+  .tpl.on{border-color:#2563eb;box-shadow:0 0 0 3px #bfdbfe}
+  .tpl svg{display:block;width:100%;height:auto;border-radius:4px;margin-bottom:3px}
+  .pals{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .pal{display:flex;border-radius:7px;overflow:hidden;border:2px solid #e2e8f0;cursor:pointer;height:26px}
+  .pal i{width:14px}
+  .pal:hover{border-color:#2563eb}
+  .colors{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}
+  .colors label{font-size:10.5px;color:#475569;text-align:center}
+  .colors input{width:100%;height:32px;border:1px solid #cfd8e3;border-radius:7px;padding:2px;background:#fff;cursor:pointer}
+  .posgrid{display:grid;grid-template-columns:repeat(3,22px);gap:3px}
+  .posgrid button{width:22px;height:18px;border:1px solid #cbd5e1;background:#fff;border-radius:3px;cursor:pointer;padding:0}
+  .posgrid button:hover{background:#2563eb}
+  /* ---------- stage ---------- */
+  .stage{flex:1;display:flex;flex-direction:column;min-width:0}
+  .stagebar{display:flex;align-items:center;gap:10px;padding:8px 16px;background:#f8fafc;border-bottom:1px solid #d7dee8;flex-wrap:wrap}
+  .stagebar .sp{flex:1}
+  .recnav{display:flex;align-items:center;gap:6px;font-weight:600}
+  .view{flex:1;overflow:auto;display:flex;align-items:center;justify-content:center;padding:30px;position:relative;background:radial-gradient(circle at 1px 1px,#cdd5e0 1px,transparent 0) 0 0/20px 20px}
+  .frame{box-shadow:0 20px 60px rgba(15,23,42,.25);flex:none;position:relative}
+  .frame .cert{transform-origin:0 0;position:absolute;top:0;left:0}
+  .tip{position:absolute;left:16px;bottom:12px;background:rgba(15,23,42,.8);color:#fff;font-size:11.5px;padding:6px 10px;border-radius:8px;pointer-events:none}
+  .guides .cert [data-drag]{outline:1px dashed rgba(37,99,235,.7);outline-offset:2px}
+  .guides .cert [data-k]{outline:1px dashed rgba(148,163,184,.0)}
+  .cert [data-k]:hover{outline:1px dashed rgba(37,99,235,.5)!important}
+  .cert [data-k]:focus{outline:2px solid #3b82f6!important;background:rgba(59,130,246,.06)}
+  [data-drag]{cursor:move}
+  .busy{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:999;color:#fff;font-weight:600;font-size:15px;flex-direction:column;gap:12px}
+  .busy.on{display:flex}
+  .spin{width:36px;height:36px;border:4px solid rgba(255,255,255,.3);border-top-color:#f5b800;border-radius:50%;animation:s 1s linear infinite}
+  @keyframes s{to{transform:rotate(360deg)}}
+  #off{position:fixed;left:-20000px;top:0}
+  #printArea{display:none}
+
+  /* ---------- certificate ---------- */
+  .cert{position:relative;overflow:hidden;color:var(--tx);background:var(--bg)}
+  .cert .deco{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .cert .bgimg{position:absolute;inset:0;background-size:cover;background-position:center;pointer-events:none}
+  .cert .wm{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;font-weight:800;white-space:nowrap}
+  .cert .content{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center}
+  .cert .content>*{margin:0}
+  .cert .org{font-weight:700;line-height:1.1}
+  .cert .orgsub{line-height:1.35;opacity:.9}
+  .cert .ttl{font-weight:800;line-height:1.1}
+  .cert .orn{display:flex;align-items:center;gap:.6em;color:var(--c3)}
+  .cert .orn i{height:2px;width:5em;background:currentColor}
+  .cert .nm{line-height:1.15}
+  .cert .body{line-height:1.6}
+  .cert .sigs{display:flex;gap:2.2em;align-items:flex-end}
+  .cert .sig{text-align:center;min-width:9em}
+  .cert .sig .im{height:3.6em;display:flex;align-items:flex-end;justify-content:center}
+  .cert .sig .im img{max-height:100%;max-width:12em}
+  .cert .sig .st{font-size:2em;line-height:1}
+  .cert .sig .ln{border-top:1px solid currentColor;margin:.25em auto .3em;width:100%;opacity:.6}
+  .cert .sig .sn{font-weight:700;font-size:.9em}
+  .cert .sig .sr{font-size:.76em;opacity:.85}
+  .cert .abs{position:absolute;transform:translate(-50%,-50%)}
+  .cert .abs img{display:block;width:100%;height:auto}
+  .cert .cid{position:absolute;font-size:.68em;opacity:.75}
+
+  @media print{
+    body{display:block;background:#fff}
+    body>*:not(#printArea){display:none!important}
+    #printArea{display:block}
+    #printArea .cert{page-break-after:always;break-after:page}
+    #printArea .cert:last-child{page-break-after:auto;break-after:auto}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  }
+</style>
+<style id="pageStyle"></style>
+</head>
+<body>
+
+<div class="topbar">
+  <h1><i><svg class="ico" viewBox="0 0 24 24" style="stroke:#0f172a"><circle cx="12" cy="9" r="6"/><path d="m8.5 14-1.5 7 5-3 5 3-1.5-7"/></svg></i>Certificate Generator</h1>
+  <div class="types" id="types"></div>
+  <div class="tb-right">
+    <button class="btn" id="bUndo" title="Undo (Ctrl+Z)" aria-label="Undo"><svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button>
+    <button class="btn" id="bRedo" title="Redo (Ctrl+Y)" aria-label="Redo"><svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button>
+    <button class="btn" id="bSave" title="Download your design as JSON">Save design</button>
+    <button class="btn" id="bLoad" title="Load a saved JSON design">Load</button>
+    <button class="btn" id="bReset">Reset</button>
+    <button class="btn" id="bPng">PNG</button>
+    <button class="btn y" id="bPdf">Download PDF</button>
+    <button class="btn p" id="bPrint">Print</button>
+  </div>
+</div>
+
+<div class="main">
+  <aside class="side" id="side">
+
+    <details open><summary><span><svg class="ico" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></span>Text &amp; Wording</summary><div class="pad">
+      <label class="f"><b>Quick title: "Certificate of ____"</b><input type="text" id="quickOf" placeholder="e.g. Excellence, Completion, Merit"></label>
+      <label class="f"><b>Title</b><input type="text" data-b="title"></label>
+      <label class="f"><b>Subtitle above title (optional)</b><input type="text" data-b="preTitle" placeholder="e.g. 2026 Edition"></label>
+      <label class="f"><b>Line before name</b><input type="text" data-b="certify"></label>
+      <label class="f"><b>Body text</b><textarea data-b="body" rows="4"></textarea></label>
+      <div class="hint">Placeholders: <code>{name}</code> <code>{affiliation}</code> <code>{event}</code> <code>{date}</code> <code>{role}</code> <code>{paper}</code> <code>{org}</code> <code>{id}</code>. Use <code>**bold**</code> and <code>*italic*</code>.</div>
+      <label class="f"><b>Event / Program</b><textarea data-b="event" rows="2"></textarea></label>
+      <div class="row">
+        <label class="f"><b>Date</b><input type="text" data-b="date"></label>
+        <label class="f"><b>Role</b><input type="text" data-b="role"></label>
+      </div>
+      <label class="f"><b>Paper title (Best Paper)</b><input type="text" data-b="paper"></label>
+      <label class="f"><b>Footer line</b><input type="text" data-b="footer" placeholder="e.g. ISBN, venue, website"></label>
+    </div></details>
+
+    <details open><summary><span><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg></span>Recipient(s)</summary><div class="pad">
+      <label class="f"><b>Name</b><input type="text" data-b="name"></label>
+      <label class="f"><b>Affiliation</b><input type="text" data-b="affiliation"></label>
+      <label class="f"><b>Bulk list (one per line, overrides name above)</b><textarea data-b="bulk" rows="5" placeholder="Name | Affiliation | Paper title | Role&#10;Dr. A. Rahman | ULAB | Deep Learning for X | Session Chair"></textarea></label>
+      <div class="hint">Columns are separated by <code>|</code>, a tab or a comma. Only the name is required. You can also paste rows from Excel.</div>
+      <div class="row" style="margin-top:8px">
+        <button class="btn sm" id="bCsv">Import Excel / CSV</button>
+        <button class="btn sm d" id="bClearBulk">Clear list</button>
+      </div>
+      <label class="f"><b>Certificate ID pattern</b><input type="text" data-b="idPattern" placeholder="CERT-2026-{n}"></label>
+      <div class="row">
+        <label class="chk"><input type="checkbox" data-b="showId">Show ID on certificate</label>
+        <label class="f" style="margin-top:6px"><b>ID start no.</b><input type="number" data-b="idStart"></label>
+      </div>
+    </div></details>
+
+    <details open><summary><span><svg class="ico" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M19 21V10M9 21v-7M15 21v-7M2 10l10-7 10 7z"/></svg></span>Organization &amp; Logos</summary><div class="pad">
+      <label class="f"><b>Organization name</b><input type="text" data-b="orgName"></label>
+      <label class="f"><b>Organization details (multi-line)</b><textarea data-b="orgSub" rows="3"></textarea></label>
+      <div id="logoList"></div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn sm p" id="bAddLogo">+ Add logo</button>
+        <button class="btn sm" id="bMirror" title="Make logos symmetric around the centre">Mirror pairs</button>
+      </div>
+      <div class="hint">Drag logos directly on the certificate to move them.</div>
+    </div></details>
+
+    <details><summary><span><svg class="ico" viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></svg></span>Extra Text Boxes</summary><div class="pad">
+      <div class="hint">Add free text anywhere: a session name, award category, venue, a quote, a serial number. Placeholders work here.</div>
+      <div id="textList"></div>
+      <button class="btn sm p" id="bAddText" style="margin-top:10px">+ Add text box</button>
+    </div></details>
+
+    <details><summary><span><svg class="ico" viewBox="0 0 24 24"><path d="M3 17c3 0 4-6 7-6s1 6 4 6 3-3 5-3M3 21h18"/></svg></span>Signatories</summary><div class="pad">
+      <div id="sigList"></div>
+      <button class="btn sm p" id="bAddSig" style="margin-top:10px">+ Add signatory</button>
+      <div class="row">
+        <label class="chk"><input type="checkbox" data-b="sigLine">Line above names</label>
+        <label class="chk"><input type="checkbox" data-b="sigKnock">Remove white from scans</label>
+      </div>
+      <label class="f"><b>Signature script font</b><select data-b="fontSig" class="fontSel" data-kind="script"></select></label>
+      <label class="f"><b>Gap between signatures</b><div class="rng"><input type="range" min="0.5" max="8" step="0.1" data-b="sigGap"><output></output></div></label>
+    </div></details>
+
+    <details open><summary><span><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="8" cy="10" r="1.3"/><circle cx="12" cy="7.5" r="1.3"/><circle cx="16" cy="10" r="1.3"/></svg></span>Design &amp; Colors</summary><div class="pad">
+      <b style="font-size:11px;color:#475569;text-transform:uppercase">Template</b>
+      <div class="grid-tpl" id="tplGrid"></div>
+      <b style="font-size:11px;color:#475569;text-transform:uppercase;display:block;margin-top:14px">Palettes</b>
+      <div class="pals" id="pals"></div>
+      <div class="colors">
+        <label>Primary<input type="color" data-b="c1"></label>
+        <label>Second<input type="color" data-b="c2"></label>
+        <label>Accent<input type="color" data-b="c3"></label>
+        <label>Text<input type="color" data-b="tx"></label>
+        <label>Paper<input type="color" data-b="bg"></label>
+      </div>
+      <div class="row">
+        <label class="f"><b>Title color</b><select data-b="ttlColor"><option value="c1">Primary</option><option value="c2">Second</option><option value="c3">Accent</option><option value="tx">Text</option><option value="grad">Gradient</option></select></label>
+        <label class="f"><b>Name color</b><select data-b="nmColor"><option value="c1">Primary</option><option value="c2">Second</option><option value="c3">Accent</option><option value="tx">Text</option></select></label>
+      </div>
+      <label class="f"><b>Decoration intensity</b><div class="rng"><input type="range" min="0" max="1" step="0.05" data-b="decoOp"><output></output></div></label>
+      <label class="f"><b>Decoration size</b><div class="rng"><input type="range" min="0.5" max="1.6" step="0.05" data-b="decoSize"><output></output></div></label>
+      <label class="f"><b>Background image (optional)</b><input type="file" accept="image/*" data-up="bgImg"></label>
+      <div class="row">
+        <label class="f"><b>Bg image opacity</b><div class="rng"><input type="range" min="0" max="1" step="0.05" data-b="bgOp"><output></output></div></label>
+        <button class="btn sm d" style="margin-top:28px" data-act="clearBg">Remove image</button>
+      </div>
+    </div></details>
+
+    <details><summary><span><svg class="ico" viewBox="0 0 24 24"><path d="M4 20 9 6l5 14M6 15h6M15 20v-6a3 3 0 0 1 6 0v6M15 17h6"/></svg></span>Typography</summary><div class="pad">
+      <div class="row">
+        <label class="f"><b>Organization</b><select data-b="fontOrg" class="fontSel"></select></label>
+        <label class="f"><b>Title</b><select data-b="fontTitle" class="fontSel"></select></label>
+        <label class="f"><b>Name</b><select data-b="fontName" class="fontSel" data-kind="all"></select></label>
+        <label class="f"><b>Body</b><select data-b="fontBody" class="fontSel"></select></label>
+      </div>
+      <label class="f"><b>Overall text size</b><div class="rng"><input type="range" min="0.6" max="1.5" step="0.01" data-b="scale"><output></output></div></label>
+      <label class="f"><b>Organization size</b><div class="rng"><input type="range" min="0.4" max="2" step="0.05" data-b="szOrg"><output></output></div></label>
+      <label class="f"><b>Title size</b><div class="rng"><input type="range" min="0.4" max="2" step="0.05" data-b="szTitle"><output></output></div></label>
+      <label class="f"><b>Title letter spacing</b><div class="rng"><input type="range" min="-0.05" max="0.4" step="0.01" data-b="ttlSpacing"><output></output></div></label>
+      <label class="f"><b>Name size</b><div class="rng"><input type="range" min="0.4" max="2.4" step="0.05" data-b="szName"><output></output></div></label>
+      <label class="f"><b>Body size</b><div class="rng"><input type="range" min="0.5" max="1.8" step="0.05" data-b="szBody"><output></output></div></label>
+      <div class="row">
+        <label class="chk"><input type="checkbox" data-b="ttlUpper">Title in CAPS</label>
+        <label class="chk"><input type="checkbox" data-b="nmUnderline">Line under name</label>
+        <label class="chk"><input type="checkbox" data-b="ornament">Ornament divider</label>
+        <label class="chk"><input type="checkbox" data-b="bodyItalic">Italic body</label>
+      </div>
+    </div></details>
+
+    <details><summary><span><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg></span>Layout &amp; Page</summary><div class="pad">
+      <div class="row">
+        <label class="f"><b>Paper</b><select data-b="paper"><option value="a4">A4</option><option value="letter">US Letter</option></select></label>
+        <label class="f"><b>Orientation</b><select data-b="orient"><option value="land">Landscape</option><option value="port">Portrait</option></select></label>
+      </div>
+      <label class="f"><b>Text alignment</b><select data-b="align"><option value="center">Center</option><option value="left">Left</option><option value="right">Right</option></select></label>
+      <label class="f"><b>Line spacing between blocks</b><div class="rng"><input type="range" min="0" max="2.5" step="0.05" data-b="gap"><output></output></div></label>
+      <label class="f"><b>Side margin</b><div class="rng"><input type="range" min="0.5" max="1.8" step="0.05" data-b="padX"><output></output></div></label>
+      <label class="f"><b>Move content up / down</b><div class="rng"><input type="range" min="-15" max="15" step="0.5" data-b="offY"><output></output></div></label>
+      <label class="f"><b>Body text width</b><div class="rng"><input type="range" min="20" max="70" step="1" data-b="bodyW"><output></output></div></label>
+      <b style="font-size:11px;color:#475569;text-transform:uppercase;display:block;margin-top:12px">Show / hide blocks</b>
+      <div class="row">
+        <label class="chk"><input type="checkbox" data-b="show.org">Organization</label>
+        <label class="chk"><input type="checkbox" data-b="show.orgSub">Org details</label>
+        <label class="chk"><input type="checkbox" data-b="show.certify">Line before name</label>
+        <label class="chk"><input type="checkbox" data-b="show.aff">Affiliation</label>
+        <label class="chk"><input type="checkbox" data-b="show.sigs">Signatures</label>
+        <label class="chk"><input type="checkbox" data-b="show.footer">Footer</label>
+      </div>
+    </div></details>
+
+    <details><summary><span><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="m8.5 14-1.5 7 5-3 5 3-1.5-7"/></svg></span>Seal, QR &amp; Watermark</summary><div class="pad">
+      <label class="chk"><input type="checkbox" data-b="seal.on"><b>Award seal / badge</b></label>
+      <div class="row">
+        <label class="f"><b>Seal top text</b><input type="text" data-b="seal.text"></label>
+        <label class="f"><b>Seal centre</b><input type="text" data-b="seal.center"></label>
+      </div>
+      <label class="f"><b>Seal style</b><select data-b="seal.style"><option value="burst">Gold burst</option><option value="ribbon">Rosette with ribbons</option><option value="ring">Simple ring</option></select></label>
+      <label class="f"><b>Seal size</b><div class="rng"><input type="range" min="60" max="260" step="2" data-b="seal.w"><output></output></div></label>
+      <hr style="border:0;border-top:1px solid #e5eaf1;margin:14px 0 4px">
+      <label class="chk"><input type="checkbox" data-b="qr.on"><b>Verification QR code</b></label>
+      <label class="f"><b>QR content</b><input type="text" data-b="qr.text"></label>
+      <div class="hint">Placeholders work here too, e.g. <code>https://example.org/verify/{id}</code></div>
+      <label class="f"><b>QR size</b><div class="rng"><input type="range" min="50" max="200" step="2" data-b="qr.w"><output></output></div></label>
+      <label class="f"><b>QR caption</b><input type="text" data-b="qr.cap" placeholder="Scan to verify"></label>
+      <hr style="border:0;border-top:1px solid #e5eaf1;margin:14px 0 4px">
+      <label class="chk"><input type="checkbox" data-b="wm.on"><b>Watermark</b></label>
+      <label class="f"><b>Watermark text</b><input type="text" data-b="wm.text"></label>
+      <div class="row">
+        <label class="f"><b>Opacity</b><div class="rng"><input type="range" min="0.02" max="0.3" step="0.01" data-b="wm.op"><output></output></div></label>
+        <label class="f"><b>Angle</b><div class="rng"><input type="range" min="-60" max="60" step="1" data-b="wm.rot"><output></output></div></label>
+      </div>
+      <div class="hint">You can drag the seal and QR code on the certificate.</div>
+    </div></details>
+
+    <div class="pad" style="padding-top:14px"><div class="hint">Your work saves automatically in this browser. Use <b>Save design</b> to keep a copy or share it.</div></div>
+  </aside>
+
+  <section class="stage">
+    <div class="stagebar">
+      <div class="recnav"><button class="btn sm" id="pv">◀</button><span id="recLbl">1 / 1</span><button class="btn sm" id="nx">▶</button></div>
+      <span id="recName" style="color:#64748b"></span>
+      <span class="sp"></span>
+      <label class="chk" style="margin:0"><input type="checkbox" id="guides" checked>Show guides</label>
+      <label style="display:flex;align-items:center;gap:6px">Zoom <select id="zoom" style="width:auto;padding:4px 6px"><option value="fit">Fit</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100%</option></select></label>
+    </div>
+    <div class="view guides" id="view">
+      <div class="frame" id="frame"></div>
+      <div class="tip">Click text to edit it. Drag logos, seal, QR and text boxes. Select one and use the arrow keys to nudge it (hold Shift for bigger steps), Alt+scroll to resize, Del to remove. Ctrl+Z undoes.</div>
+    </div>
+  </section>
+</div>
+
+<input type="file" id="fileJson" accept=".json,application/json" hidden>
+<input type="file" id="fileCsv" accept=".csv,.txt,.tsv,.xlsx,.xls" hidden>
+<div id="off"></div>
+<div id="printArea"></div>
+<div id="qrTmp" style="display:none"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="busy" id="busy"><div class="spin"></div><div id="busyMsg">Working…</div></div>
+
+<script>
+(function(){
+/* ======================= data ======================= */
+var FONTS={
+  'Montserrat':'"Montserrat",sans-serif','Poppins':'"Poppins",sans-serif','Roboto':'"Roboto",sans-serif','Inter':'"Inter",sans-serif','Oswald':'"Oswald",sans-serif',
+  'Cinzel':'"Cinzel",serif','Playfair Display':'"Playfair Display",serif','Lora':'"Lora",serif','EB Garamond':'"EB Garamond",serif','Merriweather':'"Merriweather",serif','Libre Baskerville':'"Libre Baskerville",serif','Times':'"Times New Roman",serif'
+};
+var SCRIPTS={'Great Vibes':'"Great Vibes",cursive','Pinyon Script':'"Pinyon Script",cursive','Allura':'"Allura",cursive','Dancing Script':'"Dancing Script",cursive'};
+
+var TYPES={
+  reviewer:{label:'Reviewer',title:'Certificate of Appreciation',preTitle:'Exceptional Reviewer',certify:'This is to certify that',
+    body:'has served as a **reviewer** for the {event}, held on {date}. Your dedication to providing high-quality, timely and impactful peer reviews has been vital to the success of the conference.',seal:false},
+  participation:{label:'Participation',title:'Certificate of Participation',preTitle:'',certify:'This certificate is proudly presented to',
+    body:'for actively participating in the {event}, held on {date}.',seal:false},
+  organizer:{label:'Organizer',title:'Certificate of Recognition',preTitle:'Organizing Committee',certify:'This is to certify that',
+    body:'served as **{role}** of the {event}, held on {date}, and made a valuable contribution to its success.',seal:false},
+  bestpaper:{label:'Best Paper',title:'Best Paper Award',preTitle:'Certificate of Excellence',certify:'This award is presented to',
+    body:'for the paper titled **“{paper}”**, judged the best paper at the {event}, held on {date}.',seal:true,sealText:'BEST PAPER AWARD',sealCenter:'★ 2026 ★'},
+  appreciation:{label:'Appreciation',title:'Certificate of Appreciation',preTitle:'',certify:'This certificate is presented to',
+    body:'in grateful appreciation of the outstanding contribution and dedicated service to the {event}, held on {date}.',seal:false},
+  custom:{label:'Certificate of ____',title:'Certificate of Achievement',preTitle:'',certify:'This is to certify that',
+    body:'has successfully completed the requirements of the {event}, held on {date}.',seal:false}
+};
+
+var PALETTES=[
+  {n:'IEEE Blue',c1:'#00629b',c2:'#29a8df',c3:'#0b3d6e',tx:'#1f2933',bg:'#ffffff'},
+  {n:'Royal Gold',c1:'#14234b',c2:'#1f3a7a',c3:'#c9a227',tx:'#1b1b1b',bg:'#fbfaf6'},
+  {n:'ULAB',c1:'#0b5fa8',c2:'#3ba1dc',c3:'#f5b800',tx:'#14214d',bg:'#ffffff'},
+  {n:'Emerald',c1:'#065f46',c2:'#10b981',c3:'#d4af37',tx:'#1f2937',bg:'#fbfdfb'},
+  {n:'Crimson',c1:'#8b1e2d',c2:'#c2410c',c3:'#c9a227',tx:'#2a1a1a',bg:'#fffdf8'},
+  {n:'Purple',c1:'#3b0764',c2:'#7c3aed',c3:'#f0abfc',tx:'#1e1b2e',bg:'#ffffff'},
+  {n:'Teal',c1:'#0f4c5c',c2:'#2a9d8f',c3:'#e9c46a',tx:'#1d2d35',bg:'#ffffff'},
+  {n:'Mono',c1:'#111827',c2:'#4b5563',c3:'#9ca3af',tx:'#111827',bg:'#ffffff'},
+  {n:'Sunset',c1:'#9a3412',c2:'#f97316',c3:'#fbbf24',tx:'#292524',bg:'#fffbf5'}
+];
+
+var TEMPLATES=['geo','gold','classic','modern','ribbon','minimal'];
+var TPL_NAMES={geo:'Geometric',gold:'Gold Frame',classic:'Classic',modern:'Side Band',ribbon:'Waves',minimal:'Minimal'};
+var TPL_PAD={geo:[6,16,6,16],gold:[6.5,10,6,10],classic:[8,11,7.5,11],modern:[6,8,6,30],ribbon:[10,10,8,10],minimal:[8,11,8,11]};
+
+function defaults(){
+  return {
+    type:'reviewer',
+    title:TYPES.reviewer.title,preTitle:TYPES.reviewer.preTitle,certify:TYPES.reviewer.certify,body:TYPES.reviewer.body,
+    event:'International Conference on Advanced Computing, Communication, Electrical and Smart Systems (ICACCESS 2026)',
+    date:'15–16 October 2026',role:'Technical Program Committee Member',paper:'Title of the Paper Goes Here',
+    footer:'Organized by the Department of CSE, University of Liberal Arts Bangladesh, Dhaka',
+    name:'Dr. Recipient Name',affiliation:'Department of CSE, University of Liberal Arts Bangladesh',
+    bulk:'',idPattern:'ICACCESS-2026-{n}',idStart:1,showId:true,
+    orgName:'University of Liberal Arts Bangladesh',
+    orgSub:'Department of Computer Science & Engineering\n688 Beribadh Road, Mohammadpur, Dhaka-1207, Bangladesh',
+    logos:[{src:'icaccess-logo.png',x:22,y:15,w:120},{src:'ulab-science-logo.png',x:78,y:15,w:120}],
+    sigs:[
+      {name:'Prof. Signatory One',role:'General Chair',img:'',text:'S. One'},
+      {name:'Dr. Signatory Two',role:'TPC Chair',img:'',text:'S. Two'},
+      {name:'Dr. Signatory Three',role:'Head, Department of CSE',img:'',text:'S. Three'}
+    ],
+    sigLine:true,sigKnock:true,fontSig:'Great Vibes',sigGap:3,
+    tpl:'geo',c1:'#00629b',c2:'#29a8df',c3:'#0b3d6e',tx:'#1f2933',bg:'#ffffff',ttlColor:'c1',nmColor:'tx',
+    decoOp:1,decoSize:1,bgImg:'',bgOp:.25,
+    fontOrg:'Montserrat',fontTitle:'Montserrat',fontName:'Roboto',fontBody:'Roboto',
+    scale:1,szOrg:1,szTitle:1,szName:1,szBody:1,ttlSpacing:0,ttlUpper:true,nmUnderline:true,ornament:false,bodyItalic:true,
+    paper:'a4',orient:'land',align:'center',gap:.7,padX:1,offY:0,bodyW:46,
+    show:{org:true,orgSub:true,certify:true,aff:true,sigs:true,footer:true},
+    seal:{on:false,text:'CERTIFICATE OF EXCELLENCE',center:'★',style:'burst',w:130,x:88,y:80},
+    qr:{on:true,text:'https://icaccess.ulab.edu.bd/verify/{id}',w:80,cap:'Scan to verify',x:91,y:82},
+    texts:[],
+    wm:{on:false,text:'ICACCESS 2026',op:.06,rot:-25}
+  };
+}
+
+var S, rec=0, KEY='certgen.v1';
+function deepMerge(a,b){for(var k in b){if(b[k]&&typeof b[k]==='object'&&!Array.isArray(b[k])&&a[k]&&typeof a[k]==='object')deepMerge(a[k],b[k]);else a[k]=b[k]}return a}
+try{var saved=localStorage.getItem(KEY);S=saved?deepMerge(defaults(),JSON.parse(saved)):defaults()}catch(e){S=defaults()}
+var saveT;function save(){clearTimeout(saveT);saveT=setTimeout(function(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}},300)}
+
+function get(p){return p.split('.').reduce(function(o,k){return o==null?o:o[k]},S)}
+function set(p,v){var ks=p.split('.'),o=S;for(var i=0;i<ks.length-1;i++)o=o[ks[i]];o[ks[ks.length-1]]=v}
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+var $=function(s,r){return(r||document).querySelector(s)},$$=function(s,r){return[].slice.call((r||document).querySelectorAll(s))};
+
+/* ======================= recipients ======================= */
+function records(){
+  var lines=(S.bulk||'').split(/\r?\n/).map(function(l){return l.trim()}).filter(Boolean);
+  if(!lines.length)return[{name:S.name,affiliation:S.affiliation,paper:S.paper,role:S.role}];
+  return lines.map(function(l){
+    var p=l.indexOf('|')>-1?l.split('|'):l.indexOf('\t')>-1?l.split('\t'):l.split(',');
+    p=p.map(function(x){return x.trim().replace(/^"|"$/g,'')});
+    return{name:p[0]||'',affiliation:p[1]||S.affiliation,paper:p[2]||S.paper,role:p[3]||S.role};
+  });
+}
+function certId(i){var n=String((+S.idStart||1)+i);while(n.length<3)n='0'+n;return(S.idPattern||'').replace(/\{n\}/g,n)}
+function fill(str,r,i){
+  var m={name:r.name,affiliation:r.affiliation,event:S.event,date:S.date,role:r.role,paper:r.paper,org:S.orgName,id:certId(i)};
+  return String(str||'').replace(/\{(\w+)\}/g,function(a,k){return k in m?m[k]:a});
+}
+function rich(str,r,i){
+  return esc(fill(str,r,i)).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\*(.+?)\*/g,'<i>$1</i>').replace(/\n/g,'<br>');
+}
+
+/* ======================= page geometry ======================= */
+function dims(){var w=S.paper==='letter'?[1056,816]:[1123,794];return S.orient==='port'?{W:w[1],H:w[0]}:{W:w[0],H:w[1]}}
+
+/* ======================= decorations ======================= */
+function deco(W,H){
+  var c1=S.c1,c2=S.c2,c3=S.c3,k=S.decoSize,o='';
+  switch(S.tpl){
+  case 'geo':
+    var a=W*.13*k,b=W*.11*k,c=W*.06*k;
+    var g='<polygon points="0,0 '+a+',0 '+W*.02*k+','+H+' 0,'+H+'" fill="'+c1+'"/>'+
+      '<polygon points="0,'+H*.3+' '+b+','+H+' 0,'+H+'" fill="'+c2+'" opacity=".9"/>'+
+      '<polygon points="0,0 '+c+',0 0,'+H*.45+'" fill="'+c3+'" opacity=".85"/>';
+    o=g+'<g transform="translate('+W+',0) scale(-1,1)">'+g+'</g>';break;
+  case 'gold':
+    o='<rect x="18" y="18" width="'+(W-36)+'" height="'+(H-36)+'" fill="none" stroke="'+c3+'" stroke-width="3"/>'+
+      '<rect x="30" y="30" width="'+(W-60)+'" height="'+(H-60)+'" fill="none" stroke="'+c3+'" stroke-width="1"/>';
+    var cr='<polygon points="'+(W-W*.2*k)+',0 '+W+',0 '+W+','+H*.3*k+'" fill="'+c1+'"/>'+
+      '<line x1="'+(W-W*.25*k)+'" y1="0" x2="'+W+'" y2="'+H*.37*k+'" stroke="'+c3+'" stroke-width="'+8*k+'"/>'+
+      '<line x1="'+(W-W*.29*k)+'" y1="0" x2="'+W+'" y2="'+H*.43*k+'" stroke="'+c3+'" stroke-width="'+2*k+'"/>';
+    o+=cr+'<g transform="rotate(180 '+W/2+' '+H/2+')">'+cr+'</g>';
+    for(var i=0;i<3;i++){var y=H*(.5+i*.07);o+='<polyline points="'+(W-56)+','+y+' '+(W-26)+','+(y+H*.035)+' '+(W-56)+','+(y+H*.07)+'" fill="none" stroke="'+c3+'" stroke-width="2"/>';
+      o+='<polyline points="56,'+(H-y)+' 26,'+(H-y-H*.035)+' 56,'+(H-y-H*.07)+'" fill="none" stroke="'+c3+'" stroke-width="2"/>'}
+    break;
+  case 'classic':
+    o='<rect x="14" y="14" width="'+(W-28)+'" height="'+(H-28)+'" fill="none" stroke="'+c1+'" stroke-width="'+12*k+'"/>'+
+      '<rect x="34" y="34" width="'+(W-68)+'" height="'+(H-68)+'" fill="none" stroke="'+c3+'" stroke-width="2.5"/>'+
+      '<rect x="42" y="42" width="'+(W-84)+'" height="'+(H-84)+'" fill="none" stroke="'+c3+'" stroke-width="1"/>';
+    [[42,42,0],[W-42,42,90],[W-42,H-42,180],[42,H-42,270]].forEach(function(p){
+      o+='<g transform="translate('+p[0]+','+p[1]+') rotate('+p[2]+') scale('+k+')"><path d="M0 0h70M0 0v70" stroke="'+c3+'" stroke-width="5"/><rect x="-9" y="-9" width="18" height="18" transform="rotate(45)" fill="'+c1+'" stroke="'+c3+'" stroke-width="2"/><circle cx="26" cy="26" r="6" fill="'+c3+'"/><path d="M14 40 q12-26 26-26" fill="none" stroke="'+c3+'" stroke-width="1.5"/></g>'});
+    break;
+  case 'modern':
+    var bw=W*.24*k;
+    o='<defs><linearGradient id="mg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+c1+'"/><stop offset="1" stop-color="'+c2+'"/></linearGradient></defs>'+
+      '<rect width="'+bw+'" height="'+H+'" fill="url(#mg)"/><rect x="'+bw+'" width="6" height="'+H+'" fill="'+c3+'"/>';
+    for(var j=0;j<6;j++)o+='<circle cx="'+bw*.5+'" cy="'+H*(.15+j*.15)+'" r="'+bw*(.15+j%3*.12)+'" fill="none" stroke="#fff" stroke-opacity=".12" stroke-width="2"/>';
+    o+='<rect x="'+(W-30)+'" y="30" width="4" height="'+(H*.25)+'" fill="'+c3+'"/>';
+    break;
+  case 'ribbon':
+    o='<path d="M0 0H'+W+'V'+H*.1*k+'C'+W*.7+' '+H*.2*k+' '+W*.3+' '+H*.01+' 0 '+H*.13*k+'Z" fill="'+c1+'"/>'+
+      '<path d="M0 '+H*.13*k+'C'+W*.3+' '+H*.01+' '+W*.7+' '+H*.2*k+' '+W+' '+H*.1*k+'V'+H*.14*k+'C'+W*.7+' '+H*.24*k+' '+W*.3+' '+H*.06*k+' 0 '+H*.17*k+'Z" fill="'+c3+'" opacity=".85"/>'+
+      '<path d="M0 '+H+'H'+W+'V'+(H-H*.08*k)+'C'+W*.7+' '+(H-H*.16*k)+' '+W*.3+' '+(H-H*.01)+' 0 '+(H-H*.1*k)+'Z" fill="'+c2+'"/>'+
+      '<rect x="12" y="12" width="'+(W-24)+'" height="'+(H-24)+'" fill="none" stroke="'+c3+'" stroke-width="1.5" opacity=".7"/>';
+    break;
+  case 'minimal':
+    o='<rect x="40" y="40" width="'+(W-80)+'" height="'+(H-80)+'" fill="none" stroke="'+c1+'" stroke-width="1.2"/>';
+    var L=70*k;
+    [[28,28,1,1],[W-28,28,-1,1],[W-28,H-28,-1,-1],[28,H-28,1,-1]].forEach(function(p){o+='<path d="M'+p[0]+' '+(p[1]+p[3]*L)+'V'+p[1]+'H'+(p[0]+p[2]*L)+'" fill="none" stroke="'+c3+'" stroke-width="5"/>'});
+    break;
+  }
+  return '<svg class="deco" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="opacity:'+S.decoOp+'">'+o+'</svg>';
+}
+
+function sealSvg(uid,r,i){
+  var c3=S.c3,c1=S.c1,t=esc(fill(S.seal.text,r,i)),ce=esc(fill(S.seal.center,r,i)),pts='',o='';
+  if(S.seal.style==='burst'){for(var k=0;k<48;k++){var a=k*Math.PI/24,R=k%2?92:100;pts+=(100+R*Math.cos(a))+','+(100+R*Math.sin(a))+' '}o='<polygon points="'+pts+'" fill="'+c3+'"/>'}
+  if(S.seal.style==='ribbon'){o='<path d="M60 140 40 230 70 212 88 236 100 150Z" fill="'+c1+'"/><path d="M140 140 160 230 130 212 112 236 100 150Z" fill="'+c1+'"/>';for(var q=0;q<36;q++){var b=q*Math.PI/18;o+='<circle cx="'+(100+90*Math.cos(b))+'" cy="'+(100+90*Math.sin(b))+'" r="12" fill="'+c3+'"/>'}}
+  o+='<circle cx="100" cy="100" r="'+(S.seal.style==='ring'?96:82)+'" fill="'+(S.seal.style==='ring'?'none':c1)+'" stroke="'+c3+'" stroke-width="'+(S.seal.style==='ring'?6:3)+'"/>'+
+    '<circle cx="100" cy="100" r="62" fill="none" stroke="'+(S.seal.style==='ring'?c1:c3)+'" stroke-width="1.5" stroke-dasharray="3 3"/>'+
+    '<defs><path id="sp'+uid+'" d="M100 100 m-70 0 a70 70 0 1 1 140 0 a70 70 0 1 1 -140 0"/></defs>'+
+    '<text font-family="Montserrat,sans-serif" font-weight="700" font-size="14" letter-spacing="2" fill="'+(S.seal.style==='ring'?c1:'#fff')+'"><textPath href="#sp'+uid+'" startOffset="50%" text-anchor="middle">'+t+'</textPath></text>'+
+    '<text x="100" y="110" text-anchor="middle" font-family="Cinzel,serif" font-weight="700" font-size="28" fill="'+(S.seal.style==='ring'?c1:c3)+'">'+ce+'</text>';
+  return '<svg viewBox="0 0 200 '+(S.seal.style==='ribbon'?240:200)+'" width="100%">'+o+'</svg>';
+}
+
+var qrCache={};
+function qrData(text){
+  if(qrCache[text])return qrCache[text];
+  if(typeof QRCode==='undefined')return'';
+  var box=$('#qrTmp');box.innerHTML='';
+  try{new QRCode(box,{text:text||' ',width:256,height:256,correctLevel:QRCode.CorrectLevel.M});var cv=box.querySelector('canvas');qrCache[text]=cv?cv.toDataURL():''}catch(e){qrCache[text]=''}
+  return qrCache[text];
+}
+
+/* ======================= render certificate ======================= */
+var uidN=0;
+function cert(i,editable){
+  var d=dims(),W=d.W,H=d.H,r=records()[i]||records()[0],uid=++uidN;
+  var base=Math.min(W,H)/794*16*S.scale;
+  var pad=TPL_PAD[S.tpl]||[8,10,8,10];
+  var col=function(k){return k==='grad'?S.c1:S[k]};
+  var ce=editable?' contenteditable="true" spellcheck="false"':'';
+  var al=S.align,ai=al==='center'?'center':al==='left'?'flex-start':'flex-end';
+  var gap=S.gap+'em';
+  var h='<div class="cert" style="width:'+W+'px;height:'+H+'px;font-size:'+base+'px;--c1:'+S.c1+';--c2:'+S.c2+';--c3:'+S.c3+';--tx:'+S.tx+';--bg:'+S.bg+';font-family:'+FONTS[S.fontBody]+'">';
+  if(S.bgImg)h+='<div class="bgimg" style="background-image:url('+S.bgImg+');opacity:'+S.bgOp+'"></div>';
+  h+=deco(W,H);
+  if(S.wm.on)h+='<div class="wm" style="opacity:'+S.wm.op+';color:'+S.c1+';font-size:'+(W/Math.max(6,S.wm.text.length)*1.2)+'px;transform:rotate('+S.wm.rot+'deg);font-family:'+FONTS[S.fontTitle]+'">'+esc(S.wm.text)+'</div>';
+
+  var px=function(p){return p*S.padX};
+  h+='<div class="content" style="padding:'+(pad[0]+S.offY)+'% '+px(pad[1])+'% '+(pad[2]-S.offY)+'% '+px(pad[3])+'%;align-items:'+ai+';text-align:'+al+';gap:'+gap+'">';
+  if(S.show.org)h+='<div class="org" data-k="orgName"'+ce+' style="font-family:'+FONTS[S.fontOrg]+';font-size:'+(2.1*S.szOrg)+'em;color:'+S.c1+'">'+esc(S.orgName)+'</div>';
+  if(S.show.orgSub&&S.orgSub)h+='<div class="orgsub" style="font-size:.78em;margin-top:-'+(S.gap*.6)+'em">'+esc(S.orgSub).replace(/\n/g,'<br>')+'</div>';
+  if(S.preTitle)h+='<div data-k="preTitle"'+ce+' style="font-family:'+FONTS[S.fontTitle]+';font-size:1em;letter-spacing:.2em;text-transform:uppercase;color:'+S.c3+';font-weight:600;margin-top:.4em">'+esc(S.preTitle)+'</div>';
+  var ttlStyle='font-family:'+FONTS[S.fontTitle]+';font-size:'+(2.3*S.szTitle)+'em;letter-spacing:'+S.ttlSpacing+'em;'+(S.ttlUpper?'text-transform:uppercase;':'')+
+    (S.ttlColor==='grad'?'background:linear-gradient(90deg,'+S.c1+','+S.c2+');-webkit-background-clip:text;background-clip:text;color:transparent;':'color:'+col(S.ttlColor)+';');
+  h+='<div class="ttl" data-k="title"'+ce+' style="'+ttlStyle+(S.preTitle?'margin-top:-'+(S.gap*.6)+'em':'')+'">'+esc(S.title)+'</div>';
+  if(S.ornament)h+='<div class="orn"><i></i>✦<i></i></div>';
+  if(S.show.certify)h+='<div data-k="certify"'+ce+' style="font-size:1.15em">'+esc(S.certify)+'</div>';
+  var nameEdit=editable&&!(S.bulk||'').trim();
+  h+='<div class="nm" '+(nameEdit?'data-k="name" contenteditable="true" spellcheck="false"':'')+' style="font-family:'+FONTS[S.fontName]+';font-size:'+(2.3*S.szName)+'em;color:'+col(S.nmColor)+';'+(FONTS[S.fontName].indexOf('cursive')>-1?'':'font-weight:500;')+
+    (S.nmUnderline?'border-bottom:1px solid '+S.tx+'66;padding:0 2em .15em;min-width:55%;':'')+'">'+esc(r.name)+'</div>';
+  if(S.show.aff&&r.affiliation)h+='<div style="font-size:1.05em;margin-top:-'+(S.gap*.5)+'em">'+esc(fill(r.affiliation,r,i))+'</div>';
+  h+='<div class="body" style="font-size:'+(1.05*S.szBody)+'em;max-width:'+S.bodyW+'em;'+(S.bodyItalic?'font-style:italic;':'')+'">'+rich(S.body,r,i)+'</div>';
+  if(S.show.sigs&&S.sigs.length){
+    h+='<div class="sigs" style="gap:'+S.sigGap+'em;margin-top:.6em;justify-content:'+ai+'">';
+    S.sigs.forEach(function(s){
+      h+='<div class="sig"><div class="im">'+(s.img?'<img src="'+s.img+'">':'<span class="st" style="font-family:'+SCRIPTS[S.fontSig]+';color:'+S.c1+'">'+esc(s.text)+'</span>')+'</div>'+
+        (S.sigLine?'<div class="ln"></div>':'<div style="height:.3em"></div>')+'<div class="sn" style="color:'+S.c1+'">'+esc(s.name)+'</div><div class="sr">'+esc(s.role)+'</div></div>';
+    });
+    h+='</div>';
+  }
+  if(S.show.footer&&S.footer)h+='<div data-k="footer"'+ce+' style="font-size:.85em;font-weight:600;color:'+S.c1+'">'+esc(fill(S.footer,r,i))+'</div>';
+  h+='</div>';
+
+  S.logos.forEach(function(l,n){if(l.src)h+='<div class="abs" data-drag="logos.'+n+'" style="left:'+l.x+'%;top:'+l.y+'%;width:'+l.w+'px"><img src="'+esc(l.src)+'" alt="" draggable="false"></div>'});
+  (S.texts||[]).forEach(function(t,n){h+='<div class="abs" data-drag="texts.'+n+'" style="left:'+t.x+'%;top:'+t.y+'%;width:'+t.w+'px;text-align:'+t.al+';font-size:'+t.size+'px;font-family:'+(FONTS[t.font]||SCRIPTS[t.font])+';color:'+(S[t.color]||t.color)+';font-weight:'+(t.bold?700:400)+';font-style:'+(t.italic?'italic':'normal')+';letter-spacing:'+t.ls+'em;'+(t.upper?'text-transform:uppercase;':'')+'line-height:1.3">'+rich(t.text,r,i)+'</div>'});
+  if(S.seal.on)h+='<div class="abs" data-drag="seal" style="left:'+S.seal.x+'%;top:'+S.seal.y+'%;width:'+S.seal.w+'px">'+sealSvg(uid,r,i)+'</div>';
+  if(S.qr.on){var q=qrData(fill(S.qr.text,r,i));if(q)h+='<div class="abs" data-drag="qr" style="left:'+S.qr.x+'%;top:'+S.qr.y+'%;width:'+S.qr.w+'px;text-align:center"><img src="'+q+'" style="background:#fff;padding:4px" draggable="false">'+(S.qr.cap?'<div style="font-size:'+Math.max(8,S.qr.w/9)+'px;margin-top:2px;white-space:nowrap">'+esc(S.qr.cap)+'</div>':'')+'</div>'}
+  if(S.showId)h+='<div class="cid" style="left:'+(S.tpl==='modern'?27:Math.max(5,pad[3]*.7))+'%;bottom:'+(S.tpl==='ribbon'?10:4.5)+'%">Certificate ID: '+esc(certId(i))+'</div>';
+  h+='</div>';
+  return h;
+}
+
+/* ======================= preview ======================= */
+var curScale=1;
+function render(){
+  var list=records();if(rec>=list.length)rec=list.length-1;if(rec<0)rec=0;
+  var d=dims(),view=$('#view'),z=$('#zoom').value;
+  var s=z==='fit'?Math.min((view.clientWidth-60)/d.W,(view.clientHeight-60)/d.H):+z;
+  curScale=Math.max(.1,s);
+  var fr=$('#frame');fr.style.width=d.W*curScale+'px';fr.style.height=d.H*curScale+'px';
+  fr.innerHTML=cert(rec,true);
+  fr.firstChild.style.transform='scale('+curScale+')';
+  $('#recLbl').textContent=(rec+1)+' / '+list.length;
+  $('#recName').textContent=list.length>1?list[rec].name:'';
+  $('#pageStyle').textContent='@page{size:'+(S.paper==='letter'?(S.orient==='land'?'11in 8.5in':'8.5in 11in'):(S.orient==='land'?'297mm 210mm':'210mm 297mm'))+';margin:0}';
+  save();scheduleHist();markSel();
+}
+
+/* ======================= sidebar ======================= */
+function fontOptions(sel){
+  var kind=sel.dataset.kind,src=kind==='script'?SCRIPTS:kind==='all'?Object.assign({},FONTS,SCRIPTS):FONTS;
+  sel.innerHTML=Object.keys(src).map(function(f){return'<option style="font-family:'+src[f]+'">'+f+'</option>'}).join('');
+}
+$$('.fontSel').forEach(fontOptions);
+
+function syncInputs(){
+  $$('[data-b]',$('#side')).forEach(function(el){
+    var v=get(el.dataset.b);
+    if(el.type==='checkbox')el.checked=!!v;else if(v!=null)el.value=v;
+    var o=el.parentNode.querySelector('output');if(o)o.textContent=(+v).toFixed(2).replace(/\.?0+$/,'');
+  });
+  $$('#types button').forEach(function(b){b.classList.toggle('on',b.dataset.t===S.type)});
+  $$('.tpl').forEach(function(b){b.classList.toggle('on',b.dataset.t===S.tpl)});
+}
+
+function posBtns(path){
+  var P=[[15,14],[50,14],[85,14],[12,50],[50,50],[88,50],[15,85],[50,85],[85,85]];
+  return'<div class="posgrid" title="Quick position">'+P.map(function(p){return'<button data-act="pos" data-p="'+path+'" data-x="'+p[0]+'" data-y="'+p[1]+'"></button>'}).join('')+'</div>';
+}
+function rngRow(label,path,min,max,step){var v=get(path);return'<label class="f"><b>'+label+'</b><div class="rng"><input type="range" min="'+min+'" max="'+max+'" step="'+step+'" data-b="'+path+'" value="'+v+'"><output>'+v+'</output></div></label>'}
+
+function lists(){
+  $('#logoList').innerHTML=S.logos.map(function(l,n){
+    return'<div class="item"><div class="item-h">'+(l.src?'<img src="'+esc(l.src)+'">':'<div style="width:40px;height:40px;border:1px dashed #cbd5e1;border-radius:6px"></div>')+'<b>Logo '+(n+1)+'</b>'+posBtns('logos.'+n)+
+      '<button class="btn sm" data-act="up" data-i="'+n+'" title="Bring forward">↑</button><button class="btn sm d" data-act="delLogo" data-i="'+n+'">✕</button></div>'+
+      '<label class="f"><b>Image</b><input type="file" accept="image/*" data-up="logos.'+n+'.src"></label>'+
+      rngRow('Width (px)','logos.'+n+'.w',30,400,2)+'<div class="row">'+rngRow('X %','logos.'+n+'.x',0,100,.5)+rngRow('Y %','logos.'+n+'.y',0,100,.5)+'</div></div>';
+  }).join('');
+  var fo=Object.keys(FONTS).concat(Object.keys(SCRIPTS));
+  $('#textList').innerHTML=(S.texts||[]).map(function(t,n){
+    return'<div class="item"><div class="item-h"><b>Text '+(n+1)+'</b>'+posBtns('texts.'+n)+'<button class="btn sm" data-act="dupText" data-i="'+n+'" title="Duplicate" aria-label="Duplicate">⧉</button><button class="btn sm d" data-act="delText" data-i="'+n+'" aria-label="Delete">✕</button></div>'+
+      '<label class="f"><b>Text</b><textarea rows="2" data-b="texts.'+n+'.text">'+esc(t.text)+'</textarea></label>'+
+      '<div class="row3"><label class="f"><b>Font</b><select data-b="texts.'+n+'.font">'+fo.map(function(f){return'<option'+(f===t.font?' selected':'')+'>'+f+'</option>'}).join('')+'</select></label>'+
+      '<label class="f"><b>Color</b><select data-b="texts.'+n+'.color">'+[['c1','Primary'],['c2','Second'],['c3','Accent'],['tx','Text'],['#ffffff','White']].map(function(c){return'<option value="'+c[0]+'"'+(c[0]===t.color?' selected':'')+'>'+c[1]+'</option>'}).join('')+'</select></label>'+
+      '<label class="f"><b>Align</b><select data-b="texts.'+n+'.al">'+['left','center','right'].map(function(a){return'<option'+(a===t.al?' selected':'')+'>'+a+'</option>'}).join('')+'</select></label></div>'+
+      rngRow('Size (px)','texts.'+n+'.size',8,90,1)+rngRow('Box width (px)','texts.'+n+'.w',60,1000,5)+rngRow('Letter spacing','texts.'+n+'.ls',-0.05,0.5,0.01)+
+      '<div class="row3"><label class="chk"><input type="checkbox" data-b="texts.'+n+'.bold"'+(t.bold?' checked':'')+'>Bold</label><label class="chk"><input type="checkbox" data-b="texts.'+n+'.italic"'+(t.italic?' checked':'')+'>Italic</label><label class="chk"><input type="checkbox" data-b="texts.'+n+'.upper"'+(t.upper?' checked':'')+'>CAPS</label></div>'+
+      '<div class="row">'+rngRow('X %','texts.'+n+'.x',0,100,.5)+rngRow('Y %','texts.'+n+'.y',0,100,.5)+'</div></div>';
+  }).join('');
+  $('#sigList').innerHTML=S.sigs.map(function(s,n){
+    return'<div class="item"><div class="item-h"><b>Signatory '+(n+1)+'</b><button class="btn sm" data-act="sigUp" data-i="'+n+'" title="Move left">←</button><button class="btn sm d" data-act="delSig" data-i="'+n+'">✕</button></div>'+
+      '<div class="row"><label class="f"><b>Name</b><input type="text" data-b="sigs.'+n+'.name" value="'+esc(s.name)+'"></label><label class="f"><b>Designation</b><input type="text" data-b="sigs.'+n+'.role" value="'+esc(s.role)+'"></label></div>'+
+      '<label class="f"><b>Signature image (PNG / JPG scan)</b><input type="file" accept="image/*" data-up="sigs.'+n+'.img"></label>'+
+      (s.img?'<button class="btn sm d" data-act="clrSig" data-i="'+n+'" style="margin-top:6px">Remove image (use typed signature)</button>':'<label class="f"><b>…or typed signature</b><input type="text" data-b="sigs.'+n+'.text" value="'+esc(s.text)+'"></label>')+'</div>';
+  }).join('');
+}
+
+/* type buttons */
+$('#types').innerHTML=Object.keys(TYPES).map(function(k){return'<button data-t="'+k+'">'+TYPES[k].label+'</button>'}).join('');
+$('#types').onclick=function(e){
+  var t=e.target.dataset.t;if(!t)return;var P=TYPES[t];
+  S.type=t;S.title=P.title;S.preTitle=P.preTitle;S.certify=P.certify;S.body=P.body;
+  S.seal.on=!!P.seal;if(P.sealText){S.seal.text=P.sealText;S.seal.center=P.sealCenter}
+  if(t==='custom')setTimeout(function(){$('#quickOf').focus()},0);
+  syncInputs();render();
+};
+$('#quickOf').oninput=function(){if(this.value.trim()){S.title='Certificate of '+this.value.trim();S.type='custom';syncInputs();render()}};
+
+/* template thumbs */
+$('#tplGrid').innerHTML=TEMPLATES.map(function(t){
+  var keep=S.tpl;S.tpl=t;var svg=deco(1123,794).replace('class="deco"','').replace(/style="[^"]*"/,'');S.tpl=keep;
+  return'<div class="tpl" data-t="'+t+'"><svg viewBox="0 0 1123 794" style="background:#fff;border:1px solid #eef">'+svg.replace(/^<svg[^>]*>|<\/svg>$/g,'')+'<rect x="380" y="330" width="363" height="26" fill="#cbd5e1"/><rect x="430" y="390" width="263" height="16" fill="#e2e8f0"/></svg>'+TPL_NAMES[t]+'</div>';
+}).join('');
+$('#tplGrid').onclick=function(e){var t=e.target.closest('.tpl');if(!t)return;S.tpl=t.dataset.t;
+  if(S.tpl==='modern'&&S.align==='center'){S.align='left'}
+  syncInputs();render()};
+
+/* palettes */
+$('#pals').innerHTML=PALETTES.map(function(p,n){return'<div class="pal" data-n="'+n+'" title="'+p.n+'"><i style="background:'+p.c1+'"></i><i style="background:'+p.c2+'"></i><i style="background:'+p.c3+'"></i><i style="background:'+p.bg+';border-left:1px solid #eee"></i></div>'}).join('');
+$('#pals').onclick=function(e){var p=e.target.closest('.pal');if(!p)return;var P=PALETTES[p.dataset.n];['c1','c2','c3','tx','bg'].forEach(function(k){S[k]=P[k]});syncInputs();render()};
+
+/* generic bindings */
+var side=$('#side');
+side.addEventListener('input',function(e){
+  var el=e.target,p=el.dataset.b;if(!p)return;
+  var v=el.type==='checkbox'?el.checked:(el.type==='range'||el.type==='number')?parseFloat(el.value):el.value;
+  set(p,v);
+  var o=el.parentNode.querySelector('output');if(o)o.textContent=(+v).toFixed(2).replace(/\.?0+$/,'');
+  render();
+});
+side.addEventListener('change',function(e){
+  var el=e.target,p=el.dataset.up;if(!p||!el.files[0])return;
+  var fr=new FileReader();fr.onload=function(){
+    var url=fr.result;
+    var done=function(u){set(p,u);lists();render()};
+    if(/^sigs\./.test(p)&&S.sigKnock)knockWhite(url,done);else done(url);
+  };fr.readAsDataURL(el.files[0]);
+});
+side.addEventListener('click',function(e){
+  var b=e.target.closest('[data-act]');if(!b)return;var a=b.dataset.act,i=+b.dataset.i;
+  if(a==='delLogo')S.logos.splice(i,1);
+  if(a==='up'&&i<S.logos.length-1){var t=S.logos.splice(i,1)[0];S.logos.push(t)}
+  if(a==='delSig')S.sigs.splice(i,1);
+  if(a==='sigUp'&&i>0){var s=S.sigs.splice(i,1)[0];S.sigs.splice(i-1,0,s)}
+  if(a==='clrSig')S.sigs[i].img='';
+  if(a==='clearBg')S.bgImg='';
+  if(a==='delText')S.texts.splice(i,1);
+  if(a==='dupText'){var c=JSON.parse(JSON.stringify(S.texts[i]));c.y=Math.min(95,c.y+5);S.texts.push(c)}
+  if(a==='pos'){var o=get(b.dataset.p);o.x=+b.dataset.x;o.y=+b.dataset.y}
+  lists();render();
+});
+$('#bAddLogo').onclick=function(){S.logos.push({src:'',x:50,y:12,w:110});lists();render()};
+$('#bAddText').onclick=function(){S.texts=S.texts||[];S.texts.push({text:'Your text here',x:50,y:30,w:400,size:20,font:'Montserrat',color:'c1',al:'center',bold:true,italic:false,upper:false,ls:0});lists();render();toast('Text box added. Drag it into place.')};
+$('#bAddSig').onclick=function(){S.sigs.push({name:'Name',role:'Designation',img:'',text:'Signature'});lists();render()};
+$('#bMirror').onclick=function(){S.logos.forEach(function(l,n){if(n%2===1){var p=S.logos[n-1];l.x=100-p.x;l.y=p.y;l.w=p.w}});lists();render()};
+$('#bClearBulk').onclick=function(){S.bulk='';rec=0;syncInputs();render()};
+$('#bCsv').onclick=function(){$('#fileCsv').click()};
+$('#fileCsv').onchange=function(){var f=this.files[0];if(!f)return;
+  if(/\.xlsx?$/i.test(f.name)){var xr=new FileReader();xr.onload=function(){
+    try{var wb=XLSX.read(new Uint8Array(xr.result),{type:'array'}),rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''});
+      rows=rows.filter(function(r){return r.join('').trim()});
+      if(rows.length&&/name/i.test(String(rows[0][0])))rows.shift();
+      S.bulk=rows.map(function(r){return r.slice(0,4).map(function(c){return String(c).replace(/\|/g,'/')}).join(' | ')}).join('\n');rec=0;syncInputs();render();toast(rows.length+' recipients imported')}
+    catch(e){toast('Could not read that spreadsheet')}};xr.readAsArrayBuffer(f);this.value='';return}
+  var r=new FileReader();r.onload=function(){
+  var lines=String(r.result).split(/\r?\n/).filter(function(l){return l.trim()});
+  if(lines.length&&/name/i.test(lines[0].split(/[,\t|]/)[0]))lines.shift();
+  S.bulk=lines.join('\n');rec=0;syncInputs();render();toast(lines.length+' recipients imported')};r.readAsText(f);this.value=''};
+
+function knockWhite(url,cb){
+  var im=new Image();im.onload=function(){
+    var c=document.createElement('canvas');c.width=im.width;c.height=im.height;var x=c.getContext('2d');x.drawImage(im,0,0);
+    try{var d=x.getImageData(0,0,c.width,c.height),p=d.data;
+      for(var i=0;i<p.length;i+=4){var l=(p[i]+p[i+1]+p[i+2])/3;if(l>200)p[i+3]=Math.max(0,255-(l-200)*4.6)}
+      x.putImageData(d,0,0);cb(c.toDataURL('image/png'))}catch(e){cb(url)}
+  };im.src=url;
+}
+
+/* ======================= preview interactions ======================= */
+var frame=$('#frame');
+frame.addEventListener('input',function(e){
+  var el=e.target.closest('[data-k]');if(!el)return;
+  S[el.dataset.k]=el.innerText.replace(/\n+$/,'');
+  var inp=$('[data-b="'+el.dataset.k+'"]',side);if(inp)inp.value=S[el.dataset.k];
+  save();
+});
+frame.addEventListener('keydown',function(e){if(e.key==='Enter'&&e.target.closest('[data-k]')){e.preventDefault();e.target.blur()}});
+frame.addEventListener('focusout',function(e){if(e.target.closest('[data-k]'))render()});
+
+var drag=null;
+frame.addEventListener('pointerdown',function(e){
+  var el=e.target.closest('[data-drag]');if(!el)return;e.preventDefault();
+  selPath=el.dataset.drag;markSel();
+  var o=get(el.dataset.drag);drag={el:el,o:o,sx:e.clientX,sy:e.clientY,x:o.x,y:o.y,d:dims()};
+  el.setPointerCapture(e.pointerId);
+});
+frame.addEventListener('pointermove',function(e){
+  if(!drag)return;
+  var nx=drag.x+(e.clientX-drag.sx)/curScale/drag.d.W*100,ny=drag.y+(e.clientY-drag.sy)/curScale/drag.d.H*100;
+  if(Math.abs(nx-50)<1)nx=50; /* snap to centre */
+  drag.o.x=Math.round(Math.max(0,Math.min(100,nx))*10)/10;drag.o.y=Math.round(Math.max(0,Math.min(100,ny))*10)/10;
+  drag.el.style.left=drag.o.x+'%';drag.el.style.top=drag.o.y+'%';
+});
+frame.addEventListener('pointerup',function(){if(drag){drag=null;lists();save();pushHist()}});
+frame.addEventListener('wheel',function(e){
+  var el=e.target.closest('[data-drag]');if(!el||!e.altKey)return;e.preventDefault();
+  var o=get(el.dataset.drag);o.w=Math.max(30,Math.min(400,o.w-(e.deltaY>0?6:-6)));lists();render();
+},{passive:false});
+
+$('#pv').onclick=function(){rec--;if(rec<0)rec=records().length-1;render()};
+$('#nx').onclick=function(){rec++;if(rec>=records().length)rec=0;render()};
+$('#zoom').onchange=render;
+$('#guides').onchange=function(){$('#view').classList.toggle('guides',this.checked)};
+addEventListener('resize',render);
+
+/* ======================= export ======================= */
+function busy(on,msg){$('#busy').classList.toggle('on',on);if(msg)$('#busyMsg').textContent=msg}
+function slug(s){return String(s).replace(/[^\w\-]+/g,'_').replace(/^_|_$/g,'').slice(0,60)||'certificate'}
+function snap(i){
+  var off=$('#off');off.innerHTML=cert(i,false);
+  return document.fonts.ready.then(function(){
+    var imgs=$$('img',off);return Promise.all(imgs.map(function(im){return im.complete?0:new Promise(function(r){im.onload=im.onerror=r})}));
+  }).then(function(){return html2canvas(off.firstChild,{scale:2,useCORS:true,backgroundColor:null,logging:false})});
+}
+function exportErr(e){busy(false);console.error(e);alert('Export failed. This usually happens when the page is opened as a local file and a logo comes from disk.\n\nFix: upload the logos with the "Image" buttons (they are then embedded), or use Print → Save as PDF.')}
+
+$('#bPng').onclick=function(){
+  var list=records();busy(true,'Rendering PNG…');
+  if(list.length===1)return snap(0).then(function(c){busy(false);var a=document.createElement('a');a.download=slug(list[0].name)+'.png';a.href=c.toDataURL('image/png');a.click()}).catch(exportErr);
+  var zip=new JSZip(),i=0;
+  (function next(){
+    if(i>=list.length){busy(true,'Zipping…');return zip.generateAsync({type:'blob'}).then(function(b){busy(false);var a=document.createElement('a');a.download='certificates.zip';a.href=URL.createObjectURL(b);a.click()})}
+    busy(true,'Rendering '+(i+1)+' of '+list.length+'…');
+    snap(i).then(function(c){zip.file(String(i+1).padStart(3,'0')+'_'+slug(list[i].name)+'.png',c.toDataURL('image/png').split(',')[1],{base64:true});i++;next()}).catch(exportErr);
+  })();
+};
+$('#bPdf').onclick=function(){
+  var list=records(),d=dims(),fmt=S.paper==='letter'?'letter':'a4',or=S.orient==='land'?'landscape':'portrait';
+  var pdf=new jspdf.jsPDF({orientation:or,unit:'pt',format:fmt}),pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight(),i=0;
+  (function next(){
+    if(i>=list.length){busy(false);pdf.save(list.length===1?slug(list[0].name)+'.pdf':'certificates.pdf');toast('PDF downloaded');return}
+    busy(true,'Rendering '+(i+1)+' of '+list.length+'…');
+    snap(i).then(function(c){if(i)pdf.addPage(fmt,or);pdf.addImage(c.toDataURL('image/jpeg',.95),'JPEG',0,0,pw,ph);i++;next()}).catch(exportErr);
+  })();
+};
+$('#bPrint').onclick=function(){
+  var list=records(),h='';for(var i=0;i<list.length;i++)h+=cert(i,false);
+  $('#printArea').innerHTML=h;document.fonts.ready.then(function(){setTimeout(function(){print()},300)});
+};
+$('#bSave').onclick=function(){var a=document.createElement('a');a.download='certificate-design.json';a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:'application/json'}));a.click()};
+$('#bLoad').onclick=function(){$('#fileJson').click()};
+$('#fileJson').onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{S=deepMerge(defaults(),JSON.parse(r.result));rec=0;syncInputs();lists();render();toast('Design loaded')}catch(e){toast('That file is not a valid design')}};r.readAsText(f);this.value=''};
+$('#bReset').onclick=function(){if(confirm('Reset everything to the default design? Unsaved changes will be lost.')){S=defaults();rec=0;syncInputs();lists();render()}};
+
+/* ======================= history, selection, shortcuts ======================= */
+var hist=[],hi=-1,histT,selPath=null,restoring=false;
+function pushHist(){if(restoring)return;var j=JSON.stringify(S);if(hist[hi]===j)return;hist=hist.slice(0,hi+1);hist.push(j);if(hist.length>80)hist.shift();hi=hist.length-1;updUR()}
+function scheduleHist(){clearTimeout(histT);histT=setTimeout(pushHist,450)}
+function updUR(){$('#bUndo').disabled=hi<=0;$('#bRedo').disabled=hi>=hist.length-1}
+function restore(n){if(n<0||n>=hist.length)return;hi=n;restoring=true;S=JSON.parse(hist[hi]);syncInputs();lists();render();clearTimeout(histT);restoring=false;updUR()}
+$('#bUndo').onclick=function(){clearTimeout(histT);pushHist();restore(hi-1)};
+$('#bRedo').onclick=function(){restore(hi+1)};
+function markSel(){$$('#frame .sel').forEach(function(e){e.classList.remove('sel')});if(selPath){var e=$('#frame [data-drag="'+selPath+'"]');if(e)e.classList.add('sel');else selPath=null}}
+frame.addEventListener('click',function(e){if(!e.target.closest('[data-drag]')){selPath=null;markSel()}});
+var tt;function toast(m){var t=$('#toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){t.classList.remove('on')},2600)}
+document.addEventListener('keydown',function(e){
+  var typing=/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)||e.target.isContentEditable;
+  var mod=e.ctrlKey||e.metaKey,k=e.key.toLowerCase();
+  if(mod&&k==='z'&&!typing){e.preventDefault();e.shiftKey?$('#bRedo').click():$('#bUndo').click();return}
+  if(mod&&k==='y'&&!typing){e.preventDefault();$('#bRedo').click();return}
+  if(mod&&k==='p'){e.preventDefault();$('#bPrint').click();return}
+  if(mod&&k==='s'){e.preventDefault();$('#bSave').click();return}
+  if(typing||!selPath)return;
+  var o=get(selPath),st=e.shiftKey?2:.25;
+  if(e.key==='ArrowLeft')o.x-=st;else if(e.key==='ArrowRight')o.x+=st;else if(e.key==='ArrowUp')o.y-=st;else if(e.key==='ArrowDown')o.y+=st;
+  else if(e.key==='Delete'||e.key==='Backspace'){var m=selPath.match(/^(logos|texts)\.(\d+)$/);if(m)S[m[1]].splice(+m[2],1);else if(selPath==='seal')S.seal.on=false;else if(selPath==='qr')S.qr.on=false;selPath=null;syncInputs();lists();render();toast('Removed. Press Ctrl+Z to undo.');return}
+  else if(e.key==='Escape'){selPath=null;markSel();return}else return;
+  e.preventDefault();o.x=Math.round(o.x*100)/100;o.y=Math.round(o.y*100)/100;lists();render();
+});
+
+/* ======================= go ======================= */
+syncInputs();lists();
+document.fonts.ready.then(render);render();pushHist();
+})();
+</script>
+</body>
+</html>
